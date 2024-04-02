@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from src.auth.manager import fastapi_users, auth_backend, current_active_user, get_user_manager
+from src.utils.manager import fastapi_users, auth_backend, current_active_user
 from src.models.auth import User
 from src.schemas.auth import UserRead, UserCreate, UserUpdate
 
@@ -37,7 +37,7 @@ router.include_router(
 async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.email}!"}
 
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 templates = Jinja2Templates(directory="templates")  # Убедитесь, что у вас есть папка templates с HTML-файлами.

@@ -1,4 +1,4 @@
-from src.crypto.utils.coin_market_cup_API import CoinMarketCupAPI
+from src.utils.crypto.coin_market_cup_API import CoinMarketCupAPI
 from src.utils.redis_manager import AsyncRedis
 from src.utils.time_manager import timing_decorator
 

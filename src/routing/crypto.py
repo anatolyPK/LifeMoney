@@ -1,12 +1,9 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.manager import current_active_user
-from src.crypto.crud import add_crypto_transaction, get_user_transactions
-from src.config.db.database import db_helper
+from src.utils.manager import current_active_user
 from src.models.auth import User
-from src.schemas.crypto import TransactionRead, TransactionAdd, TransactionUpdate
-from src.services.crypto import CryptoService, crypto_service
+from src.schemas.crypto import TransactionRead, TransactionAdd, CryptoPortfolio
+from src.services.crypto import crypto_service
 
 router = APIRouter(
     prefix='/crypto',
@@ -14,15 +11,19 @@ router = APIRouter(
 )
 
 
-@router.get("/")
-async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"Hello {user.email}!"}
+@router.get("/",
+            response_model=CryptoPortfolio)
+async def crypto_portfolio(user: User = Depends(current_active_user)):
+    assets_portfolio = await crypto_service.get_user_portfolio(user)
+    portfolio = CryptoPortfolio(total=123,
+                                assets=assets_portfolio)
+    return portfolio
 
 
 @router.get("/transactions",
             response_model=list[TransactionRead])
 async def crypto_transactions(user: User = Depends(current_active_user)):
-    transactions = await crypto_service.get_user_transaction(user)
+    transactions = await crypto_service.get_user_transactions(user)
     return transactions
 
 

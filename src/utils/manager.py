@@ -2,15 +2,15 @@ from typing import Optional
 
 import jwt
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, IntegerIDMixin, schemas, models, exceptions
+from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin, schemas, models, exceptions
 from fastapi_users.authentication import (
     AuthenticationBackend,
     JWTStrategy, CookieTransport,
 )
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
-from src.auth.email_service import send_verification_email
-from src.auth.utils import get_user_db
+from src.dependencies.auth import get_user_db
+from src.utils.email_service import send_verification_email
 from src.models.auth import User
 
 SECRET = "SECRET"
