@@ -1,7 +1,7 @@
-from src.config.db.database import db_helper
-from src.models.auth import CryptoTransaction
-from src.repositories.sqlalchemy_repository import SqlAlchemyRepository, ModelType
-from src.schemas.crypto import TransactionAddWithUser, TransactionUpdate
+from src.core.db.database import db_helper
+from src.base.base_model import CryptoTransaction
+from src.base.sqlalchemy_repository import SqlAlchemyRepository, ModelType
+from src.modules.cryptos.schemas import TransactionAddWithUser, TransactionUpdate
 
 
 class CryptoRepository(SqlAlchemyRepository[ModelType, TransactionAddWithUser, TransactionUpdate]):

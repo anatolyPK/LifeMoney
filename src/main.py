@@ -7,7 +7,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
-from config.project_config import settings
+from core.config.project import settings
 from src.routing.routes import get_apps_router
 
 

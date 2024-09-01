@@ -1,10 +1,9 @@
-from src.models.auth import User
-from src.repositories.base_repository import AbstractRepository
-from src.repositories.crypto_repository import crypro_repository
-from src.schemas.crypto import TransactionAdd, TransactionAddWithUser, TransactionUpdate, CryptoPortfolio
-from src.services.base_service import BaseService
+from src.base.base_repository import AbstractRepository
+from src.modules.cryptos.repository import crypro_repository
+from src.modules.cryptos.schemas import TransactionAdd, TransactionAddWithUser
+from src.base.base_service import BaseService
 from src.utils.crypto.portfolio import CryptoPortfolioMaker
-
+from src.base.base_model import User
 
 class CryptoService(BaseService):
     def __init__(self, crypto_repo: AbstractRepository):

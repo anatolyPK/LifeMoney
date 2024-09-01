@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .base_repository import AbstractRepository
-from ..models.base_model import Base
+from src.base.base_repository import AbstractRepository
+from src.base.base_model import Base
 
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -20,7 +20,8 @@ class SqlAlchemyRepository(AbstractRepository, Generic[ModelType, CreateSchemaTy
 
     async def create(self, data: CreateSchemaType) -> ModelType:
         async with self._session() as session:
-            instance = self.model(**data.dict())
+            # print('DATA', data)
+            instance = self.model(**data.model_dump())
             session.add(instance)
             await session.commit()
             await session.refresh(instance)

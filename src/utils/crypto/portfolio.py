@@ -1,7 +1,6 @@
 from typing import List
 
-from src.schemas.crypto import CryptoAsset, TransactionRead
-
+from src.modules.cryptos.schemas import CryptoAsset, TransactionRead
 
 stablecoins = ['usdt', 'usdc']
 fiat_currencies = ['rub', 'usd']
@@ -39,14 +38,14 @@ class TransactionManager:
         return (
                 transaction.token_2.lower() in fiat_currencies and
                 transaction.is_buy_or_sell
-                )
+        )
 
     @staticmethod
     async def _is_output_transaction(transaction: TransactionRead):
         return (
                 transaction.token_2.lower() in fiat_currencies and
                 not transaction.is_buy_or_sell
-                )
+        )
 
 
 class CryptoPortfolioMaker(TransactionManager):
@@ -70,17 +69,29 @@ class CryptoPortfolioMaker(TransactionManager):
         if asset_index is not None:
             self._subtract_token(assets_ind=asset_index, quantity=quantity * (1 / price_in_usd))
 
-    def _process_transaction(self, transaction):
+    def _process_transaction(self, transaction: TransactionRead):
         if transaction.is_buy_or_sell:
-            self._process_buy(token=transaction.token_1, quantity=transaction.quantity,
-                              price_in_usd=transaction.price_in_usd)
-            self._process_sell(token=transaction.token_2, quantity=transaction.quantity,
-                               price_in_usd=transaction.price_in_usd)
+            self._process_buy(
+                token=transaction.token_1,
+                quantity=transaction.quantity,
+                              price_in_usd=transaction.price_in_usd
+            )
+            self._process_sell(
+                token=transaction.token_2,
+                quantity=transaction.quantity,
+                               price_in_usd=transaction.price_in_usd
+            )
         else:
-            self._process_sell(token=transaction.token_1, quantity=transaction.quantity,
-                               price_in_usd=transaction.price_in_usd)
-            self._process_buy(token=transaction.token_2, quantity=transaction.quantity,
-                              price_in_usd=transaction.price_in_usd)
+            self._process_sell(
+                token=transaction.token_1,
+                quantity=transaction.quantity,
+                               price_in_usd=transaction.price_in_usd
+            )
+            self._process_buy(
+                token=transaction.token_2,
+                quantity=transaction.quantity,
+                              price_in_usd=transaction.price_in_usd
+            )
 
     def _get_asset_index_in_assets(self, token: str, may_be_null: bool = False):
         assets_ind = self._check_asset_exist_in_portfolio(token)
@@ -97,11 +108,13 @@ class CryptoPortfolioMaker(TransactionManager):
         return
 
     def _summarize_token(self, assets_ind: int, quantity: float, price: float):
-        self.assets[assets_ind].average_price_buy = MathOperation.get_new_average_price(old_average_price=self.assets[assets_ind].average_price_buy,
-                                                                               new_price=price,
-                                                                               old_size=self.assets[assets_ind].quantity,
-                                                                               new_buy_size=quantity)
-        self.assets[assets_ind].quantity += quantity
+        self.assets[assets_ind].average_price_buy = MathOperation.get_new_average_price(
+            old_average_price=self.assets[assets_ind].average_price_buy,
+            new_price=price,
+            old_size=self.assets[assets_ind].quantity,
+            new_buy_size=quantity
+        )
+        self.assets[assets_ind].quantity1 += quantity
 
     def _subtract_token(self, assets_ind: int, quantity: float):
         self.assets[assets_ind].quantity += quantity
@@ -117,12 +130,13 @@ class CryptoPortfolioMaker(TransactionManager):
 
     def recalculate_portfolio(self):
         for asset in self.assets:
-            asset.current_price = 30000 #REDIS
+            asset.current_price = 30000  # REDIS
             asset.balance = asset.quantity * asset.current_price
             self.balance += asset.balance
-            asset.profit_in_currency, asset.profit_in_percent = MathOperation.get_profits(asset.average_price_buy * asset.quantity,
-                                                                                          asset.balance)
+            asset.profit_in_currency, asset.profit_in_percent = MathOperation.get_profits(
+                asset.average_price_buy * asset.quantity,
+                asset.balance
+            )
 
         for asset in self.assets:
             asset.percent_of_portfolio = asset.balance / self.balance
-

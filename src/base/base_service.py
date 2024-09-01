@@ -1,6 +1,6 @@
-from ..repositories.base_repository import AbstractRepository
-from ..repositories.sqlalchemy_repository import ModelType
-from ..schemas.base_shcema import PyModel
+from src.base.base_repository import AbstractRepository
+from src.base.sqlalchemy_repository import ModelType
+from base.base_shcema import PyModel
 
 
 class BaseService:
