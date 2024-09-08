@@ -4,12 +4,25 @@ from fastapi import APIRouter, Depends, Response, HTTPException, status
 from pydantic import EmailStr
 from sqlalchemy.exc import NoResultFound
 
-from auth.dependencies import validate_auth_user, verify_fingerprint, extract_refresh_token_from_cookie
+from src.auth.dependencies import (
+    validate_auth_user,
+    verify_fingerprint,
+    extract_refresh_token_from_cookie,
+)
 from src.base.base_model import User
-from auth.schemas import AccessTokenInfo
-from auth.services import auth_service
-from exceptions import LoginExist, EmailExist, UnexpectedError, UserEmailDoesNotExist, ResetTokenPasswordIncorrect
-from users.dependencies import get_current_user_from_access_token_payload, get_current_user_for_refresh
+from src.auth.schemas import AccessTokenInfo
+from src.auth.services import auth_service
+from src.exceptions import (
+    LoginExist,
+    EmailExist,
+    UnexpectedError,
+    UserEmailDoesNotExist,
+    ResetTokenPasswordIncorrect,
+)
+from users.dependencies import (
+    get_current_user_from_access_token_payload,
+    get_current_user_for_refresh,
+)
 from users.schemas import UserSchema, UserCreate, UserRead
 from users.services import user_service
 

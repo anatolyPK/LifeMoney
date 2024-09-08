@@ -1,4 +1,13 @@
+import uuid
+
 from pydantic import BaseModel
+
+
+class TokenSchema(BaseModel):
+    id_: int
+    name: str
+    symbol: str
+    cg_id: str
 
 
 class CryptoAsset(BaseModel):
@@ -19,11 +28,12 @@ class CryptoPortfolio(BaseModel):
 
 
 class BaseTransaction(BaseModel):
-    token_1: str
-    token_2: str
+    token_1_id: int
+    token_2_id: int
     quantity: float
     is_buy_or_sell: bool
     price_in_usd: float
+    timestamp: int
 
 
 class TransactionAdd(BaseTransaction):
@@ -31,7 +41,7 @@ class TransactionAdd(BaseTransaction):
 
 
 class TransactionAddWithUser(BaseTransaction):
-    user_id: int
+    user_id: uuid.UUID
 
 
 class TransactionRead(BaseTransaction):
@@ -39,6 +49,4 @@ class TransactionRead(BaseTransaction):
 
 
 class TransactionUpdate(BaseTransaction):
-    user_id: int
-
-
+    user_id: uuid.UUID

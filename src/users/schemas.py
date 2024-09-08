@@ -71,6 +71,3 @@ class UserInfoFromPayload(BaseModel):
     is_superuser: bool = None
     is_verified: bool = None
     is_active: bool = None
-
-
-

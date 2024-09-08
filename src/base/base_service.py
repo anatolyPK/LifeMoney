@@ -4,7 +4,6 @@ from base.base_shcema import PyModel
 
 
 class BaseService:
-
     def __init__(self, repository: AbstractRepository) -> None:
         self.repository: AbstractRepository = repository
 
@@ -19,4 +18,3 @@ class BaseService:
 
     async def get(self, pk: int) -> ModelType:
         return await self.repository.get(id=pk)
-    

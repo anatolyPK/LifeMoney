@@ -2,7 +2,7 @@ import logging
 
 import bcrypt
 
-from exceptions import InvalidSalt
+from src.exceptions import InvalidSalt
 
 logger = logging.getLogger("main")
 
@@ -18,8 +18,7 @@ def validate_password(password: str, hashed_password: str | bytes) -> bool:
         hashed_password = hashed_password.encode()
     try:
         return bcrypt.checkpw(
-            password=password.encode(),
-            hashed_password=hashed_password
+            password=password.encode(), hashed_password=hashed_password
         )
     except ValueError as ex:
         if "Invalid salt" in str(ex):

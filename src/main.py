@@ -5,24 +5,29 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from redis import asyncio as aioredis
 
 from core.config.project import settings
-from src.routing.routes import get_apps_router
+from routing.routes import get_apps_router
+from utils.redis_manager import redis_client
 
 
 def get_application() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        redis = aioredis.from_url("redis://localhost")
-        FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+        # // TODO chto eto and how connect redis
+        await redis_client.connect()
+        redis = await redis_client.get_client()
+        FastAPICache.init(
+            RedisBackend(redis), prefix="fastapi-cache"
+        )
         yield
+        await redis_client.close()
 
     application = FastAPI(
         title=settings.PROJECT_NAME,
         debug=settings.DEBUG,
         version=settings.VERSION,
-        lifespan=lifespan
+        lifespan=lifespan,
     )
     application.include_router(get_apps_router())
 

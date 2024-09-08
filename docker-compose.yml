@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+    ports:
+      - '8000:8000'
+    restart: always
+    container_name: "backend"
+    volumes:
+      - .:/code
+    environment:
+      - POSTGRES_HOST=database
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - PYTHONPATH=/code/src
+    command: >
+      sh -c "alembic -c src/core/db/alembic.ini upgrade head 
+      && uvicorn src.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      - database
+
+  database:
+    image: postgres:16-alpine
+    container_name: "database"
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    ports:
+      - '5432:5432'
+
+  redis:
+    image: redis:7.0.5-alpine
+    container_name: "redis"
+    restart: always
+    hostname: redis
+    command: redis-server
+    ports:
+      - '6379:6379'

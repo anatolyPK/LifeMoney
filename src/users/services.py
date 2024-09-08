@@ -6,7 +6,13 @@ from src.base.base_model import User
 from core.security import hash_password
 from src.base.base_service import BaseService
 from users.repository import user_repository
-from users.schemas import UserUpdate, UserUpdateWithHashedPassword, UserSchema, UserCreate, UserCreateSchemeForDB
+from users.schemas import (
+    UserUpdate,
+    UserUpdateWithHashedPassword,
+    UserSchema,
+    UserCreate,
+    UserCreateSchemeForDB,
+)
 from src.utils.email import EmailSender
 
 

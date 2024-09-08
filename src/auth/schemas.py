@@ -43,5 +43,3 @@ class RefreshTokenCreate(BaseModel):
             expire = now + timedelta(days=refresh_token_expire_days)
             return expire.replace(tzinfo=None)
         return v
-
-

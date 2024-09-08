@@ -1,11 +1,11 @@
 from fastapi import APIRouter
 
-from src.auth.routes import router as auth_router
-from src.users.routes import router as user_router
-from src.modules.cryptos.routes import router as crypto_router
+from auth.routes import router as auth_router
+from users.routes import router as user_router
+from modules.cryptos.routes import router as crypto_router
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 def get_apps_router():
@@ -13,4 +13,3 @@ def get_apps_router():
     router.include_router(crypto_router)
     router.include_router(user_router)
     return router
-

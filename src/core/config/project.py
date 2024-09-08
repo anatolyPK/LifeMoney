@@ -28,6 +28,11 @@ class AuthJWT(BaseModel):
     RESET_PASSWORD_TOKEN_AUDIENCE: str = "fastapi"
 
 
+class ApiKeys(BaseSettings):
+    API_KEY_CMC: str
+    API_KEY_CG: str
+
+
 class Settings(BaseSettings):
     # HOST: str
     DB_ECHO: bool
@@ -37,6 +42,7 @@ class Settings(BaseSettings):
     CORS_ALLOWED_ORIGINS: str
 
     auth_jwt: AuthJWT = AuthJWT()
+    api_keys: ApiKeys = ApiKeys()
 
 
 settings = Settings()

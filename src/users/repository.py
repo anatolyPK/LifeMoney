@@ -10,7 +10,7 @@ from src.base.sqlalchemy_repository import SqlAlchemyRepository
 from users.schemas import UserCreate
 
 
-logger = logging.getLogger('main')
+logger = logging.getLogger("main")
 
 
 class UserRepository(SqlAlchemyRepository):
@@ -20,15 +20,17 @@ class UserRepository(SqlAlchemyRepository):
         except IntegrityError as ex:
             error_message = str(ex.orig)
 
-            match = re.search(r'duplicate key value violates unique constraint "([^"]+)"',
-                              error_message)
+            match = re.search(
+                r'duplicate key value violates unique constraint "([^"]+)"',
+                error_message,
+            )
             if match:
                 constraint_name = match.group(1)
                 if constraint_name == "user_username_key":
                     raise LoginExist
                 elif constraint_name == "ix_user_email":
                     raise EmailExist
-            logger.warning(f'{ex} {match} {data}')
+            logger.warning(f"{ex} {match} {data}")
             raise UnexpectedError
 
 
