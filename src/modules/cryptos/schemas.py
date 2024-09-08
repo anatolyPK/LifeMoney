@@ -8,10 +8,10 @@ class TokenSchema(BaseModel):
     name: str
     symbol: str
     cg_id: str
-
+# Token cg_id=aadex-finance, name=AADex Finance, symbol=ade
 
 class CryptoAsset(BaseModel):
-    token: str
+    token: TokenSchema
     quantity: float = 0
     average_price_buy: float = 0
 

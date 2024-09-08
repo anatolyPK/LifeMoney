@@ -99,8 +99,18 @@ class CryptoTransaction(Base):
     price_in_usd: Mapped[float] = mapped_column(default=0)
     timestamp: Mapped[int]
 
-    token_1: Mapped["Token"] = relationship("Token", foreign_keys=[token_1_id], back_populates="transactions_as_token_1")
-    token_2: Mapped["Token"] = relationship("Token", foreign_keys=[token_2_id], back_populates="transactions_as_token_2")
+    token_1: Mapped["Token"] = relationship(
+        "Token",
+        foreign_keys=[token_1_id],
+        back_populates="transactions_as_token_1",
+        lazy='joined'
+    )
+    token_2: Mapped["Token"] = relationship(
+        "Token",
+        foreign_keys=[token_2_id],
+        back_populates="transactions_as_token_2",
+        lazy='joined'
+    )
     user: Mapped["User"] = relationship(back_populates="crypto_transactions")
 
 

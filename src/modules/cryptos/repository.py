@@ -14,7 +14,7 @@ from src.modules.cryptos.schemas import (
 class CryptoRepository(
     SqlAlchemyRepository[ModelType, TransactionAddWithUser, TransactionUpdate]
 ):
-    async def get_unique_values(column_name: str) -> list:
+    async def get_unique_values(self, column_name: str) -> list:
         async with self._session() as session:
             stmt = (
                 select(getattr(self.model, column_name))

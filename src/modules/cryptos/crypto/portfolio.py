@@ -1,5 +1,6 @@
 from typing import List
 
+from base.base_model import Token
 from src.modules.cryptos.schemas import CryptoAsset, TransactionRead
 from src.modules.cryptos.crypto.crypto_storage import redis_manager
 
@@ -62,13 +63,13 @@ class CryptoPortfolioMaker(TransactionManager):
         self.recalculate_portfolio()
         return self.assets
 
-    def _process_buy(self, token: str, quantity: float, price_in_usd: float):
+    def _process_buy(self, token: Token, quantity: float, price_in_usd: float):
         asset_index = self._get_asset_index_in_assets(token=token)
         self._summarize_token(
             assets_ind=asset_index, quantity=quantity, price=price_in_usd
         )
 
-    def _process_sell(self, token: str, quantity: float, price_in_usd: float):
+    def _process_sell(self, token: Token, quantity: float, price_in_usd: float):
         asset_index = self._get_asset_index_in_assets(token=token, may_be_null=True)
         if asset_index is not None:
             self._subtract_token(
@@ -99,17 +100,17 @@ class CryptoPortfolioMaker(TransactionManager):
                 price_in_usd=transaction.price_in_usd,
             )
 
-    def _get_asset_index_in_assets(self, token: str, may_be_null: bool = False):
+    def _get_asset_index_in_assets(self, token: Token, may_be_null: bool = False):
         assets_ind = self._check_asset_exist_in_portfolio(token)
         if assets_ind is None and not may_be_null:
             assets_ind = self._create_asset(token=token)
         return assets_ind
 
-    def _check_asset_exist_in_portfolio(self, token: str) -> int | None:
+    def _check_asset_exist_in_portfolio(self, token: Token) -> int | None:
         """Если токен в портфеле, возвращает индекс актива в массиве активов портфеля.
         Если токена нет - возвращает None"""
         for ind, crypto_asset in enumerate(self.assets):
-            if token == crypto_asset.token:
+            if token.symbol == crypto_asset.token:
                 return ind
         return
 
@@ -127,10 +128,17 @@ class CryptoPortfolioMaker(TransactionManager):
         if self.assets[assets_ind].quantity < 0:
             self.assets[assets_ind].quantity = 0
 
-    def _create_asset(self, token: str) -> int:
+    def _create_asset(self, token_orm: Token) -> int:
         """Добавляет актив в портфель пользователя.
         Возвращает индекс актива в массиве активов пользователя"""
-        asset = CryptoAsset(token=token)
+        token_dto = Token(
+            id_=token_orm.id,
+            name=token_orm.name,
+            symbol=token_orm.symbol,
+            cg_id=token_orm.cg_id
+        )
+
+        asset = CryptoAsset(token=token_dto)
         self.assets.append(asset)
         return len(self.assets) - 1
 
