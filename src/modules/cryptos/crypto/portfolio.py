@@ -1,158 +1,109 @@
-from typing import List
 
-from base.base_model import Token
+from base.base_model import OperationEnum
+from modules.cryptos.schemas import TokenSchema
 from src.modules.cryptos.schemas import CryptoAsset, TransactionRead
 from src.modules.cryptos.crypto.crypto_storage import redis_manager
-
-stablecoins = ["usdt", "usdc"]
-fiat_currencies = ["rub", "usd"]
+from src.modules.cryptos.crypto.math import MathOperation
 
 
-class MathOperation:
-    @staticmethod
-    def get_new_average_price(
-        old_average_price: float, new_price: float, old_size: float, new_buy_size: float
-    ) -> float:
-        """Рассчитывает новую среднюю стоимость актива"""
-        return (old_size * old_average_price + new_buy_size * new_price) / (
-            new_buy_size + old_size
-        )
+class TransactionProcessor:
+    def __init__(self, portfolio_maker: "CryptoPortfolioMaker"):
+        self._portfolio_maker = portfolio_maker
 
-    @classmethod
-    def get_profits(
-        cls, average_price_buy: float, balance: float
-    ) -> tuple[float, float]:
-        profit_in_currency = cls._count_currency_profit(average_price_buy, balance)
-        profit_in_percent = cls._count_percent_profit(average_price_buy, balance)
-        return profit_in_currency, profit_in_percent
-
-    @staticmethod
-    def _count_currency_profit(start_price: float, now_price: float) -> float:
-        return now_price - start_price
-
-    @staticmethod
-    def _count_percent_profit(start_price: float, now_price: float) -> float:
-        """Считает изменение стоимости с start_price до now_price актива в процентах"""
-        return ((now_price - start_price) / start_price) * 100
-
-
-class TransactionManager:
-    @staticmethod
-    async def _is_input_transaction(transaction: TransactionRead):
-        return (
-            transaction.token_2.lower() in fiat_currencies
-            and transaction.is_buy_or_sell
-        )
-
-    @staticmethod
-    async def _is_output_transaction(transaction: TransactionRead):
-        return (
-            transaction.token_2.lower() in fiat_currencies
-            and not transaction.is_buy_or_sell
-        )
-
-
-class CryptoPortfolioMaker(TransactionManager):
-    def __init__(self):
-        self.balance = 0
-        self.assets: List[CryptoAsset] = []
-
-    def make_portfolio(self, transactions: list[TransactionRead]):
-        for transaction in transactions:
-            self._process_transaction(transaction)
-        self.recalculate_portfolio()
-        return self.assets
-
-    def _process_buy(self, token: Token, quantity: float, price_in_usd: float):
-        asset_index = self._get_asset_index_in_assets(token=token)
-        self._summarize_token(
-            assets_ind=asset_index, quantity=quantity, price=price_in_usd
-        )
-
-    def _process_sell(self, token: Token, quantity: float, price_in_usd: float):
-        asset_index = self._get_asset_index_in_assets(token=token, may_be_null=True)
-        if asset_index is not None:
-            self._subtract_token(
-                assets_ind=asset_index, quantity=quantity * (1 / price_in_usd)
-            )
+    def process_transactions(self, transactions: list[TransactionRead]):
+        [self._process_transaction(transaction) for transaction in transactions]
 
     def _process_transaction(self, transaction: TransactionRead):
-        if transaction.is_buy_or_sell:
-            self._process_buy(
-                token=transaction.token_1,
-                quantity=transaction.quantity,
-                price_in_usd=transaction.price_in_usd,
-            )
-            self._process_sell(
-                token=transaction.token_2,
-                quantity=transaction.quantity,
-                price_in_usd=transaction.price_in_usd,
-            )
-        else:
-            self._process_sell(
-                token=transaction.token_1,
-                quantity=transaction.quantity,
-                price_in_usd=transaction.price_in_usd,
-            )
-            self._process_buy(
-                token=transaction.token_2,
-                quantity=transaction.quantity,
-                price_in_usd=transaction.price_in_usd,
-            )
+        token_to_buy, token_to_sell = (
+            (transaction.token_1, transaction.token_2)
+            if transaction.operation == OperationEnum.BUY
+            else (transaction.token_2, transaction.token_1)
+        )
 
-    def _get_asset_index_in_assets(self, token: Token, may_be_null: bool = False):
-        assets_ind = self._check_asset_exist_in_portfolio(token)
-        if assets_ind is None and not may_be_null:
-            assets_ind = self._create_asset(token=token)
-        return assets_ind
+        [self._add_token_in_portfolio(token) for token in (token_to_buy, token_to_sell)]
 
-    def _check_asset_exist_in_portfolio(self, token: Token) -> int | None:
-        """Если токен в портфеле, возвращает индекс актива в массиве активов портфеля.
-        Если токена нет - возвращает None"""
-        for ind, crypto_asset in enumerate(self.assets):
-            if token.symbol == crypto_asset.token:
-                return ind
-        return
+        self._summarize_token(
+            token_to_buy, transaction.quantity, transaction.price_in_usd
+        )
+        self._subtract_token(
+            token_to_sell, transaction.quantity, transaction.price_in_usd
+        )
 
-    def _summarize_token(self, assets_ind: int, quantity: float, price: float):
-        self.assets[assets_ind].average_price_buy = MathOperation.get_new_average_price(
-            old_average_price=self.assets[assets_ind].average_price_buy,
-            new_price=price,
-            old_size=self.assets[assets_ind].quantity,
+    def _add_token_in_portfolio(self, token: TokenSchema):
+        if token.id not in self._portfolio_maker._assets:
+            self._portfolio_maker._assets[token.id] = CryptoAsset(token=token)
+
+    def _summarize_token(
+        self, token: TokenSchema, quantity: float, buy_price_in_usd: float
+    ):
+        asset = self._portfolio_maker._assets[token.id]
+        asset.average_price_buy = MathOperation.get_new_average_price(
+            old_average_price=asset.average_price_buy,
+            new_price=buy_price_in_usd,
+            old_size=asset.quantity,
             new_buy_size=quantity,
         )
-        self.assets[assets_ind].quantity1 += quantity
+        asset.quantity += quantity
 
-    def _subtract_token(self, assets_ind: int, quantity: float):
-        self.assets[assets_ind].quantity += quantity
-        if self.assets[assets_ind].quantity < 0:
-            self.assets[assets_ind].quantity = 0
+    def _subtract_token(
+        self, token: TokenSchema, quantity: float, buy_price_in_usd: float
+    ):
+        asset = self._portfolio_maker._assets[token.id]
+        asset.quantity -= quantity
+        if asset.quantity < 0:
+            asset.quantity = 0
 
-    def _create_asset(self, token_orm: Token) -> int:
-        """Добавляет актив в портфель пользователя.
-        Возвращает индекс актива в массиве активов пользователя"""
-        token_dto = Token(
-            id_=token_orm.id,
-            name=token_orm.name,
-            symbol=token_orm.symbol,
-            cg_id=token_orm.cg_id
-        )
 
-        asset = CryptoAsset(token=token_dto)
-        self.assets.append(asset)
-        return len(self.assets) - 1
+class PortfolioCalculator:
+    def __init__(self, portfolio_maker: "CryptoPortfolioMaker"):
+        self.portfolio_maker = portfolio_maker
 
-    def recalculate_portfolio(self):
-        for asset in self.assets:
-            asset.current_price = 30000  # REDIS
-            asset.current_price = redis_manager.get_current_price(asset.token)
+    async def calculate(self):
+        for asset in self.portfolio_maker._assets.values():
+            asset.current_price = await redis_manager.get_current_price(
+                asset.token.symbol
+            )
             asset.balance = asset.quantity * asset.current_price
-            self.balance += asset.balance
             asset.profit_in_currency, asset.profit_in_percent = (
                 MathOperation.get_profits(
-                    asset.average_price_buy * asset.quantity, asset.balance
+                    average_price_buy=asset.average_price_buy * asset.quantity,
+                    balance=asset.balance,
                 )
             )
 
-        for asset in self.assets:
-            asset.percent_of_portfolio = asset.balance / self.balance
+        self.portfolio_maker.balance = sum(
+            asset.balance for asset in self.portfolio_maker._assets.values()
+        )
+
+        for asset in self.portfolio_maker._assets.values():
+            asset.percent_of_portfolio = MathOperation.get_asset_percent_of_portfolio(
+                portfolio_balance=self.portfolio_maker.balance,
+                assets_balance=asset.balance,
+            )
+
+
+class CryptoPortfolioMaker:
+    def __init__(self):
+        self._assets: dict[int, CryptoAsset] = {}
+        self.balance = 0
+        self._low_balance_threshold = (
+            0.1  # Порог для отображения минимальной суммы активов in $
+        )
+        self._transaction_processor = TransactionProcessor(self)
+        self._calculator = PortfolioCalculator(self)
+
+    async def make_portfolio(self, transactions: list[TransactionRead]):
+        self._transaction_processor.process_transactions(transactions)
+        await self._calculator.calculate()
+
+    @property
+    def assets(self) -> dict[int, CryptoAsset]:
+        assets = self._hide_assets_with_low_balance()
+        return assets.values()
+
+    def _hide_assets_with_low_balance(self) -> dict[int, CryptoAsset]:
+        return {
+            token_id: asset
+            for token_id, asset in self._assets.items()
+            if asset.balance >= self._low_balance_threshold
+        }

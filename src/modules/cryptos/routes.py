@@ -9,8 +9,8 @@ from src.modules.cryptos.schemas import (
 from src.modules.cryptos.services import crypto_service, token_service
 from src.users.dependencies import get_current_active_user, get_current_superuser
 from src.base.base_model import User
-from src.modules.cryptos.crypto.pricer import set_actual_crypto_price, set_actual_crypto_price_no_redis
-from src.modules.cryptos.crypto.crypto_storage import redis_manager
+from src.modules.cryptos.crypto.pricer import set_actual_crypto_price
+from src.modules.cryptos.crypto.graph import TimePeriod
 
 
 router = APIRouter(
@@ -21,10 +21,9 @@ router = APIRouter(
 
 @router.get("/", response_model=CryptoPortfolio)
 async def crypto_portfolio(user: User = Depends(get_current_active_user)):
+    await set_actual_crypto_price()
     portfolio_assets = await crypto_service.get_user_portfolio(user)
     portfolio = CryptoPortfolio(total=123, assets=portfolio_assets)
-
-    # await set_actual_crypto_price()
     # await set_actual_crypto_price_no_redis()
     # print(await redis_manager.get_current_price('BTC'))
     return portfolio
@@ -32,7 +31,7 @@ async def crypto_portfolio(user: User = Depends(get_current_active_user)):
 
 @router.get("/transactions", response_model=list[TransactionRead])
 async def crypto_transactions(user: User = Depends(get_current_active_user)):
-    transactions = await crypto_service.get_user_transactions(user)
+    transactions = await crypto_service.get_user_transactions(user.id)
     return transactions
 
 
@@ -66,3 +65,11 @@ async def search_token(
     token_symbol: str, user: User = Depends(get_current_active_user)
 ):
     return await token_service.search_token(token_symbol)
+
+
+@router.get("/graph", status_code=200)  # , response_model=list[TokenSchema])
+async def get_graph(
+    time_period: TimePeriod, user: User = Depends(get_current_active_user)
+):
+    graph = await crypto_service.get_graph(time_period, user)
+    return {"ok": graph}

@@ -12,7 +12,7 @@ from src.auth.dependencies import (
 from src.base.base_model import User
 from src.auth.schemas import AccessTokenInfo
 from src.auth.services import auth_service
-from src.exceptions import (
+from exceptions import (
     LoginExist,
     EmailExist,
     UnexpectedError,
@@ -23,7 +23,7 @@ from users.dependencies import (
     get_current_user_from_access_token_payload,
     get_current_user_for_refresh,
 )
-from users.schemas import UserSchema, UserCreate, UserRead
+from users.schemas import UserSchema, UserCreate, UserRead, UserNewPassword
 from users.services import user_service
 
 logger = logging.getLogger("debug")
@@ -35,8 +35,9 @@ router = APIRouter(tags=["auth"], prefix="/auth")
 async def auth_user_issue_jwt(
     response: Response,
     user: UserSchema = Depends(validate_auth_user),
-    fingerprint: str = Depends(verify_fingerprint),
+    # fingerprint: str = Depends(verify_fingerprint),
 ):
+    fingerprint = "1"
     tokens = await auth_service.create_tokens(user=user, fingerprint=fingerprint)
     response.set_cookie(key="refresh_token", value=tokens.refresh_token, httponly=True)
     return AccessTokenInfo(access_token=tokens.access_token)
@@ -51,6 +52,7 @@ async def auth_user_logout(
 ):
     """
     Клиентская сторона самостоятельно удаляет access_token из заголовка!
+    Сервер удаляет refresh_token из куков
     """
     response.delete_cookie(key="refresh_token", httponly=True)
     try:
@@ -71,6 +73,10 @@ async def auth_refresh_jwt(
     refresh_token_from_cookie: str = Depends(extract_refresh_token_from_cookie),
     user: UserSchema = Depends(get_current_user_for_refresh),
 ):
+    """
+    Обновляет access_token. Обращаться на данный эндпоинт, когда время действия access_token
+    подходит к концу или уже закончилось
+    """
     try:
         logger.debug(user)
         await auth_service.delete_refresh_token(
@@ -114,6 +120,10 @@ async def auth_register_user(
 async def auth_forgot_password(
     email: EmailStr,
 ):
+    """
+    Принимает email пользователя, который забыл пароль. Возвращает reset_token, который нужно
+    передать на эндпоинт /reset_password
+    """
     try:
         reset_token = await auth_service.create_reset_token_if_forgot_password(email)
     except UserEmailDoesNotExist:
@@ -133,10 +143,13 @@ async def auth_forgot_password(
         401: {"description": ResetTokenPasswordIncorrect().message},
     },
 )
-async def auth_reset_password(new_password: str, reset_token: str):
+async def auth_reset_password(reset_token: str, new_password: UserNewPassword):
+    """
+    Присваивает пользователю новый пароль
+    """
     try:
         await auth_service.validate_and_set_new_user_password(
-            reset_token=reset_token, new_password=new_password
+            reset_token=reset_token, new_password=new_password.password
         )
     except ResetTokenPasswordIncorrect as ex:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.message)

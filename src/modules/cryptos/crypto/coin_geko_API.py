@@ -1,9 +1,7 @@
-import asyncio
 import json
 
 from core.config.project import settings
 from utils.aiohttp_manager import AsyncSession
-
 
 
 class CoinGekoAPI:
@@ -38,12 +36,13 @@ class CoinGekoAPI:
     async def get_all_token_info(cls, vs_currency: str = "usd"):
         url = f"{cls._base_url}coins/markets"
 
-        parameters =  {
+        parameters = {
             "vs_currency": vs_currency,
         }
         response_text = await AsyncSession.get(url, cls._headers, parameters)
         data = json.loads(response_text)
         return data
+
 
 # print(asyncio.run(CoinGekoAPI.get_token_list()))
 # print(asyncio.run(CoinGekoAPI.get_token_price_history('bitcoin')))

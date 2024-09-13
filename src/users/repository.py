@@ -27,11 +27,11 @@ class UserRepository(SqlAlchemyRepository):
             if match:
                 constraint_name = match.group(1)
                 if constraint_name == "user_username_key":
-                    raise LoginExist
+                    raise LoginExist()
                 elif constraint_name == "ix_user_email":
-                    raise EmailExist
+                    raise EmailExist()
             logger.warning(f"{ex} {match} {data}")
-            raise UnexpectedError
+            raise UnexpectedError()
 
 
 user_repository = UserRepository(

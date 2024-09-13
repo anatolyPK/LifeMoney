@@ -1,19 +1,3 @@
-class GamesAreOver(Exception):
-    """BGG API. Конец списка игр"""
-
-    pass
-
-
-class UnauthorizedTransactionError(Exception):
-    """
-    Транзакция игры не принадлежит текущему пользователю
-    """
-
-    def __init__(self, message="Transaction does not belong to the user"):
-        self.message = message
-        super().__init__(self.message)
-
-
 class UserEmailDoesNotExist(Exception):
     def __init__(self, message="Пользователя с такой почтой не существует"):
         self.message = message
@@ -48,5 +32,11 @@ class LoginExist(Exception):
 
 class UnexpectedError(Exception):
     def __init__(self, message="UnexpectedError! Already fixing!"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class MissUserIdOrEmail(Exception):
+    def __init__(self, message="Missing user id or user email!"):
         self.message = message
         super().__init__(self.message)

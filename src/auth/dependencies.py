@@ -11,7 +11,8 @@ from src.exceptions import InvalidSalt
 from src.users.schemas import UserInfoFromPayload
 from src.users.services import user_service
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 
 logger_debug = logging.getLogger("debug")

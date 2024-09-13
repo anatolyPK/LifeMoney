@@ -1,8 +1,9 @@
+import enum
 from datetime import datetime
 from typing import Any
 
 from sqlalchemy.types import JSON
-from sqlalchemy import TIMESTAMP, func
+from sqlalchemy import TIMESTAMP, func, Enum
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 import uuid
@@ -88,6 +89,11 @@ class RefreshToken(Base):
     rt_user: Mapped["User"] = relationship(back_populates="refresh_tokens")
 
 
+class OperationEnum(str, enum.Enum):
+    BUY = "BUY"
+    SELL = "SELL"
+
+
 class CryptoTransaction(Base):
     __tablename__ = "crypto_transaction"
 
@@ -95,7 +101,7 @@ class CryptoTransaction(Base):
     token_1_id: Mapped[int] = mapped_column(ForeignKey("token.id", ondelete="CASCADE"))
     token_2_id: Mapped[int] = mapped_column(ForeignKey("token.id", ondelete="CASCADE"))
     quantity: Mapped[float]
-    is_buy_or_sell: Mapped[bool] = mapped_column(default=True)
+    operation: Mapped[OperationEnum] = mapped_column(Enum(OperationEnum))
     price_in_usd: Mapped[float] = mapped_column(default=0)
     timestamp: Mapped[int]
 
@@ -103,13 +109,13 @@ class CryptoTransaction(Base):
         "Token",
         foreign_keys=[token_1_id],
         back_populates="transactions_as_token_1",
-        lazy='joined'
+        lazy="joined",
     )
     token_2: Mapped["Token"] = relationship(
         "Token",
         foreign_keys=[token_2_id],
         back_populates="transactions_as_token_2",
-        lazy='joined'
+        lazy="joined",
     )
     user: Mapped["User"] = relationship(back_populates="crypto_transactions")
 
@@ -122,8 +128,12 @@ class Token(Base):
     symbol: Mapped[str] = mapped_column(String(16))
 
     transactions_as_token_1: Mapped[list["CryptoTransaction"]] = relationship(
-        "CryptoTransaction", back_populates="token_1", foreign_keys=[CryptoTransaction.token_1_id]
+        "CryptoTransaction",
+        back_populates="token_1",
+        foreign_keys=[CryptoTransaction.token_1_id],
     )
     transactions_as_token_2: Mapped[list["CryptoTransaction"]] = relationship(
-        "CryptoTransaction", back_populates="token_2", foreign_keys=[CryptoTransaction.token_2_id]
+        "CryptoTransaction",
+        back_populates="token_2",
+        foreign_keys=[CryptoTransaction.token_2_id],
     )

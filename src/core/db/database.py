@@ -26,7 +26,7 @@ class ConfigDataBase(BaseSettings):
     POSTGRES_HOST: str
     POSTGRES_PORT: str
     POSTGRES_DB: str
-    DB_ECHO_LOG: bool = False
+    DB_ECHO: bool = False
 
     @property
     def database_url(self) -> Optional[PostgresDsn]:
@@ -77,4 +77,4 @@ class DatabaseHelper:
 
 
 settings_db = ConfigDataBase()
-db_helper = DatabaseHelper(settings_db.database_url, settings_db.DB_ECHO_LOG)
+db_helper = DatabaseHelper(settings_db.database_url, settings_db.DB_ECHO)

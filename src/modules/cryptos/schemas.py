@@ -1,14 +1,18 @@
 import uuid
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+
+from base.base_model import OperationEnum
 
 
 class TokenSchema(BaseModel):
-    id_: int
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
     name: str
     symbol: str
     cg_id: str
-# Token cg_id=aadex-finance, name=AADex Finance, symbol=ade
+
 
 class CryptoAsset(BaseModel):
     token: TokenSchema
@@ -28,19 +32,28 @@ class CryptoPortfolio(BaseModel):
 
 
 class BaseTransaction(BaseModel):
-    token_1_id: int
-    token_2_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+    token_1: TokenSchema
+    token_2: TokenSchema
     quantity: float
-    is_buy_or_sell: bool
+    operation: OperationEnum
     price_in_usd: float
     timestamp: int
 
 
-class TransactionAdd(BaseTransaction):
-    pass
+class TransactionAdd(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    token_1_id: int
+    token_2_id: int
+    quantity: float
+    operation: OperationEnum
+    price_in_usd: float
+    timestamp: int
 
 
-class TransactionAddWithUser(BaseTransaction):
+class TransactionAddWithUser(TransactionAdd):
     user_id: uuid.UUID
 
 

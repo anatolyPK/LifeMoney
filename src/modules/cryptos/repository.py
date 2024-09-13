@@ -1,6 +1,7 @@
 from sqlalchemy import select, case
 
 from base.base_model import Token
+from modules.cryptos.schemas import TransactionRead
 from src.core.db.database import db_helper
 from src.base.base_model import CryptoTransaction
 from src.base.sqlalchemy_repository import SqlAlchemyRepository, ModelType
@@ -14,11 +15,20 @@ from src.modules.cryptos.schemas import (
 class CryptoRepository(
     SqlAlchemyRepository[ModelType, TransactionAddWithUser, TransactionUpdate]
 ):
+    async def get_transactions(
+        self, order: str = "id", limit: int = 100, offset: int = 0, **filters
+    ) -> list[TransactionRead]:
+        results: list[CryptoTransaction] = await super().get_multi(
+            order, limit, offset, **filters
+        )
+        return [TransactionRead.model_validate(transaction) for transaction in results]
+
     async def get_unique_values(self, column_name: str) -> list:
         async with self._session() as session:
             stmt = (
-                select(getattr(self.model, column_name))
-                .distinct()  # Получаем уникальные значения
+                select(
+                    getattr(self.model, column_name)
+                ).distinct()  # Получаем уникальные значения
             )
             row = await session.execute(stmt)
             return row.scalars().all()
@@ -66,7 +76,12 @@ class TokenRepository(
             result_orm = await session.scalars(stmt)
 
             result_dto = [
-                TokenSchema(id_=token.id, name=token.name, symbol=token.symbol, cg_id=token.cg_id)
+                TokenSchema(
+                    id=token.id,
+                    name=token.name,
+                    symbol=token.symbol,
+                    cg_id=token.cg_id,
+                )
                 for token in result_orm
             ]
 

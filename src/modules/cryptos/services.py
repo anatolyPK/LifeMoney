@@ -3,11 +3,16 @@ from src.modules.cryptos.repository import (
     crypro_transactions_repository,
     token_repository,
 )
-from src.modules.cryptos.schemas import TransactionAdd, TransactionAddWithUser
+from src.modules.cryptos.schemas import (
+    TransactionAdd,
+    TransactionAddWithUser,
+    TransactionRead,
+)
 from src.base.base_service import BaseService
 from modules.cryptos.crypto.portfolio import CryptoPortfolioMaker
 from src.base.base_model import User
 from modules.cryptos.crypto.coin_geko_API import CoinGekoAPI
+from modules.cryptos.crypto.graph import TimePeriod, GraphMaker
 
 
 class CryptoService(BaseService):
@@ -15,9 +20,10 @@ class CryptoService(BaseService):
         self.crypto_repo: AbstractRepository = crypto_repo
 
     async def get_user_portfolio(self, user: User):
-        transactions = await self.get_user_transactions(user)
+        transactions: list[TransactionRead] = await self.get_user_transactions(user)
         portfolio_maker = CryptoPortfolioMaker()
-        return portfolio_maker.make_portfolio(transactions)
+        await portfolio_maker.make_portfolio(transactions)
+        return portfolio_maker.assets
 
     async def add_transaction(self, transaction: TransactionAdd, user: User):
         transaction_with_user_id = TransactionAddWithUser(
@@ -37,13 +43,19 @@ class CryptoService(BaseService):
         )
         return added_transaction
 
-    async def get_user_transactions(self, user: User):
-        transactions = await self.crypto_repo.get_multi(user_id=user.id)
+    async def get_user_transactions(self, user: User) -> list[TransactionRead]:
+        transactions = await self.crypto_repo.get_transactions(user_id=user.id)
         return transactions
 
     async def get_unique_tokens(self):
-        tokens = await self.crypto_repo.get_unique_tokens('token_1')
+        tokens = await self.crypto_repo.get_unique_tokens("token_1")
         return tokens
+
+    async def get_graph(self, time_period: TimePeriod, user: User):
+        transactions = await self.get_user_transactions(user)
+        graph_maker = GraphMaker(transactions, time_period)
+        graph_data = await graph_maker.count_assets_cost()
+        return graph_data
 
 
 class TokenService(BaseService):
@@ -56,6 +68,8 @@ class TokenService(BaseService):
 
     async def search_token(self, token_symbol: str):
         return await self.token_repo.search_token(token_symbol.lower())
+
+
 # //TODO сделать поиск по символу, потом по cg_id
 
 crypto_service = CryptoService(crypto_repo=crypro_transactions_repository)

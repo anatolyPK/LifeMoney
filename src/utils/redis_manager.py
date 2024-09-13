@@ -1,13 +1,15 @@
 import redis.asyncio as redis
 from collections import deque
 
+from core.config.project import settings
+
 
 class AsyncRedis:
-    def __init__(self, host="redis", port=6379, max_connections=10):
+    def __init__(self):
         self._pools = deque()
-        self._host = host
-        self._port = port
-        self._max_connections = max_connections
+        self._host = settings.redis.REDIS_HOST
+        self._port = settings.redis.REDIS_PORT
+        self._max_connections = settings.redis.REDIS_MAX_CONNECTIONS
 
     async def connect(self):
         for _ in range(self._max_connections):
@@ -18,7 +20,7 @@ class AsyncRedis:
                 decode_responses=True,
             )
             self._pools.append(pool)
-        print('CONNECT!')
+        print("CONNECT!")
 
     async def get_client(self):
         if not self._pools:

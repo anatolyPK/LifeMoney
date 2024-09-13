@@ -33,16 +33,23 @@ class ApiKeys(BaseSettings):
     API_KEY_CG: str
 
 
+class Redis(BaseSettings):
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_MAX_CONNECTIONS: int
+
+
 class Settings(BaseSettings):
     # HOST: str
     DB_ECHO: bool
     PROJECT_NAME: str
     VERSION: str
     DEBUG: bool
-    CORS_ALLOWED_ORIGINS: str
+    CORS_ALLOWED_ORIGINS: list = ["*"]
 
     auth_jwt: AuthJWT = AuthJWT()
     api_keys: ApiKeys = ApiKeys()
+    redis: Redis = Redis()
 
 
 settings = Settings()

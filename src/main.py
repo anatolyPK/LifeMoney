@@ -17,9 +17,7 @@ def get_application() -> FastAPI:
         # // TODO chto eto and how connect redis
         await redis_client.connect()
         redis = await redis_client.get_client()
-        FastAPICache.init(
-            RedisBackend(redis), prefix="fastapi-cache"
-        )
+        FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
         yield
         await redis_client.close()
 
