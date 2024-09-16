@@ -6,14 +6,13 @@ from src.core.db.database import db_helper
 from src.base.base_model import CryptoTransaction
 from src.base.sqlalchemy_repository import SqlAlchemyRepository, ModelType
 from src.modules.cryptos.schemas import (
-    TransactionAddWithUser,
-    TransactionUpdate,
+    TransactionAdd,
     TokenSchema,
 )
 
 
 class CryptoRepository(
-    SqlAlchemyRepository[ModelType, TransactionAddWithUser, TransactionUpdate]
+    SqlAlchemyRepository[ModelType, TransactionAdd, TransactionAdd]
 ):
     async def get_transactions(
         self, order: str = "id", limit: int = 100, offset: int = 0, **filters
@@ -35,7 +34,7 @@ class CryptoRepository(
 
 
 class TokenRepository(
-    SqlAlchemyRepository[ModelType, TransactionAddWithUser, TransactionUpdate]
+    SqlAlchemyRepository[ModelType, TransactionAdd, TransactionAdd]
 ):
     async def insert_multi(self, tokens: list[dict]):
         async with self._session() as session:

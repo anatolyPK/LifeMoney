@@ -22,6 +22,3 @@ class CoinMarketCupAPI:
         response_text = await AsyncSession.get(url, headers, parameters)
         data = json.loads(response_text)
         return data
-
-
-# print(asyncio.run(CoinMarketCupAPI.get_cryptocurrency_listings()))

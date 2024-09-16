@@ -98,25 +98,19 @@ class CryptoTransaction(Base):
     __tablename__ = "crypto_transaction"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
-    token_1_id: Mapped[int] = mapped_column(ForeignKey("token.id", ondelete="CASCADE"))
-    token_2_id: Mapped[int] = mapped_column(ForeignKey("token.id", ondelete="CASCADE"))
+    token_id: Mapped[int] = mapped_column(ForeignKey("token.id", ondelete="CASCADE"))
     quantity: Mapped[float]
     operation: Mapped[OperationEnum] = mapped_column(Enum(OperationEnum))
-    price_in_usd: Mapped[float] = mapped_column(default=0)
+    price_in_usd: Mapped[float]
     timestamp: Mapped[int]
 
-    token_1: Mapped["Token"] = relationship(
+    token: Mapped["Token"] = relationship(
         "Token",
-        foreign_keys=[token_1_id],
-        back_populates="transactions_as_token_1",
+        foreign_keys=[token_id],
+        back_populates="token_transactions",
         lazy="joined",
     )
-    token_2: Mapped["Token"] = relationship(
-        "Token",
-        foreign_keys=[token_2_id],
-        back_populates="transactions_as_token_2",
-        lazy="joined",
-    )
+
     user: Mapped["User"] = relationship(back_populates="crypto_transactions")
 
 
@@ -127,13 +121,8 @@ class Token(Base):
     name: Mapped[str] = mapped_column(String(64))
     symbol: Mapped[str] = mapped_column(String(16))
 
-    transactions_as_token_1: Mapped[list["CryptoTransaction"]] = relationship(
+    token_transactions: Mapped[list["CryptoTransaction"]] = relationship(
         "CryptoTransaction",
-        back_populates="token_1",
-        foreign_keys=[CryptoTransaction.token_1_id],
-    )
-    transactions_as_token_2: Mapped[list["CryptoTransaction"]] = relationship(
-        "CryptoTransaction",
-        back_populates="token_2",
-        foreign_keys=[CryptoTransaction.token_2_id],
+        back_populates="token",
+        foreign_keys=[CryptoTransaction.token_id],
     )

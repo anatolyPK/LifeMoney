@@ -1,3 +1,4 @@
+from base.base_model import Token, OperationEnum
 from src.base.base_repository import AbstractRepository
 from src.modules.cryptos.repository import (
     crypro_transactions_repository,
@@ -5,7 +6,6 @@ from src.modules.cryptos.repository import (
 )
 from src.modules.cryptos.schemas import (
     TransactionAdd,
-    TransactionAddWithUser,
     TransactionRead,
 )
 from src.base.base_service import BaseService
@@ -23,23 +23,20 @@ class CryptoService(BaseService):
         transactions: list[TransactionRead] = await self.get_user_transactions(user)
         portfolio_maker = CryptoPortfolioMaker()
         await portfolio_maker.make_portfolio(transactions)
-        return portfolio_maker.assets
+        return portfolio_maker.portfolio
 
     async def add_transaction(self, transaction: TransactionAdd, user: User):
-        transaction_with_user_id = TransactionAddWithUser(
-            **transaction.dict(), user_id=user.id
-        )
+        transaction_with_user_id = transaction.model_copy(update={"user_id": user.id})
         added_transaction = await self.crypto_repo.create(transaction_with_user_id)
         return added_transaction
 
     async def update_transaction(
-        self, transaction: TransactionAdd, user: User, pk: int
+            self, transaction: TransactionAdd, user: User, pk: int
     ):
-        transaction_with_user_id = TransactionAddWithUser(
-            **transaction.dict(), user_id=user.id
-        )
+        transaction_with_user_id = transaction.model_copy(update={"user_id": user.id})
         added_transaction = await self.crypto_repo.update(
-            transaction_with_user_id, id=pk
+            transaction_with_user_id,
+            id=pk
         )
         return added_transaction
 
@@ -57,10 +54,20 @@ class CryptoService(BaseService):
         graph_data = await graph_maker.count_assets_cost()
         return graph_data
 
+    async def get_token_balance(self, user: User, token_id: int):
+        transactions = await self.get_user_transactions(user)
+
+        token_balance = sum(transaction.quantity if transaction.operation == OperationEnum.BUY else -transaction.quantity
+                            for transaction in transactions if transaction.token.id == token_id)
+        return token_balance
+
 
 class TokenService(BaseService):
     def __init__(self, token_repo: AbstractRepository):
         self.token_repo: AbstractRepository = token_repo
+
+    async def get_single(self, pk: int) -> Token:
+        return await self.token_repo.get_single(id=pk)
 
     async def update_token_list(self):
         updated_tokens = await CoinGekoAPI.get_token_list()

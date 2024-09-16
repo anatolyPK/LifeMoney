@@ -1,16 +1,15 @@
 class MathOperation:
     @staticmethod
     def get_new_average_price(
-        old_average_price: float, new_price: float, old_size: float, new_buy_size: float
+            old_average_price: float, new_price: float, old_size: float, new_buy_size: float
     ) -> float:
         """Рассчитывает новую среднюю стоимость актива"""
-        return (old_size * old_average_price + new_buy_size * new_price) / (
-            new_buy_size + old_size
-        )
+
+        return (old_size * old_average_price + new_buy_size * new_price) / (new_buy_size + old_size)
 
     @classmethod
     def get_profits(
-        cls, average_price_buy: float, balance: float
+            cls, average_price_buy: float, balance: float
     ) -> tuple[float, float]:
         profit_in_currency = cls._count_currency_profit(average_price_buy, balance)
         profit_in_percent = cls._count_percent_profit(average_price_buy, balance)

@@ -61,8 +61,7 @@ def upgrade() -> None:
     op.create_table(
         "crypto_transaction",
         sa.Column("user_id", sa.Uuid(), nullable=False),
-        sa.Column("token_1_id", sa.Integer(), nullable=False),
-        sa.Column("token_2_id", sa.Integer(), nullable=False),
+        sa.Column("token_id", sa.Integer(), nullable=False),
         sa.Column("quantity", sa.Float(), nullable=False),
         sa.Column(
             "operation", sa.Enum("BUY", "SELL", name="operationenum"), nullable=False
@@ -72,8 +71,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["token_1_id"], ["token.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["token_2_id"], ["token.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["token_id"], ["token.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )

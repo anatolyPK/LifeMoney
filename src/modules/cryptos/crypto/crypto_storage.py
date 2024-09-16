@@ -16,7 +16,7 @@ class RedisCryptoManager(RedisCryptoKeys):
         self._client = _redis_client
 
     async def set_current_price(self, item_id, price):
-        key = self._get_current_price_key(item_id)
+        key = self._get_current_price_key(item_id.lower())
         await self._client.set(key, price)
 
     async def get_current_price(self, item_id) -> float:

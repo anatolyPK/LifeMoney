@@ -1,4 +1,4 @@
-import uuid
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -26,40 +26,33 @@ class CryptoAsset(BaseModel):
     percent_of_portfolio: float = 0
 
 
+class MainPortfolioInfo(BaseModel):
+    total_value: float
+    total_investment: float
+    total_profit_in_currency: float
+    total_profit_in_percent: float
+
+
 class CryptoPortfolio(BaseModel):
-    total: float
+    main_info: MainPortfolioInfo
     assets: list[CryptoAsset]
 
 
 class BaseTransaction(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    token_1: TokenSchema
-    token_2: TokenSchema
-    quantity: float
     operation: OperationEnum
+    quantity: float
     price_in_usd: float
+
     timestamp: int
 
 
-class TransactionAdd(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    token_1_id: int
-    token_2_id: int
-    quantity: float
-    operation: OperationEnum
-    price_in_usd: float
-    timestamp: int
-
-
-class TransactionAddWithUser(TransactionAdd):
-    user_id: uuid.UUID
+class TransactionAdd(BaseTransaction):
+    token_id: int
+    user_id: Optional[int] = None
 
 
 class TransactionRead(BaseTransaction):
+    token: TokenSchema
     id: int
-
-
-class TransactionUpdate(BaseTransaction):
-    user_id: uuid.UUID

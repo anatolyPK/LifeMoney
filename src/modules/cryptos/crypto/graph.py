@@ -8,6 +8,7 @@ import pandas as pd
 from base.base_model import OperationEnum
 from modules.cryptos.crypto.coin_geko_API import CoinGekoAPI
 from modules.cryptos.schemas import TransactionRead
+from utils.time_manager import timing_decorator
 
 
 class TimePeriod(Enum):
@@ -54,17 +55,17 @@ class DataFrameMaker:
         date_range = pd.date_range(
             start=start_date, end=dt_now, freq=self._period.time_step, tz=tz.tzlocal()
         )
-        unix_timestamps = date_range.astype("int64") // 10**9
+        unix_timestamps = date_range.astype("int64") // 10 ** 9
         dataframe = pd.DataFrame(index=unix_timestamps)
         return dataframe
 
 
 class TransactionProcessor:
     def __init__(
-        self,
-        transactions: list[TransactionRead],
-        period: TimePeriod,
-        dataframe: pd.DataFrame | None = None,
+            self,
+            transactions: list[TransactionRead],
+            period: TimePeriod,
+            dataframe: pd.DataFrame | None = None,
     ):
         self._transactions = transactions
         self._period = period
@@ -79,45 +80,46 @@ class TransactionProcessor:
         for transaction in self._transactions:
             self._process_transaction(transaction)
 
+    @timing_decorator
     def _process_transaction(self, transaction: TransactionRead):
-        amount = transaction.quantity
-
         nearest_timestamp = self._round_timestamp(transaction.timestamp)
-        if nearest_timestamp in self._dataframe.index:
-            for asset in (transaction.token_1, transaction.token_2):
-                asset_id = asset.cg_id
-                if asset_id in self._dataframe.columns:
-                    self._dataframe.loc[
-                        self._dataframe.index >= nearest_timestamp, asset_id
-                    ] += (
-                        amount
-                        if transaction.operation == OperationEnum.BUY
-                        else -amount
-                    )
-                else:
-                    self._dataframe.loc[nearest_timestamp:, asset_id] = amount
-                    self._dataframe.loc[nearest_timestamp, f"{asset_id}_price"] = 0
+        if transaction.token.cg_id in self._dataframe.columns:
+            self._dataframe.loc[self._dataframe.index >= nearest_timestamp, transaction.token.cg_id] += (
+                transaction.quantity
+                if transaction.operation == OperationEnum.BUY # sel process
+                else -transaction.quantity
+            )
+        else:
+            self._dataframe.loc[self._dataframe.index >= nearest_timestamp, transaction.token.cg_id] = transaction.quantity
+            self._dataframe.loc[self._dataframe.index >= nearest_timestamp, f"{transaction.token.cg_id}_price"] = 0
+
 
     def _round_timestamp(self, timestamp: int) -> int:
         return timestamp // self._period.divider * self._period.divider
 
+    @timing_decorator
     def add_price_in_df(self, prices: Sequence[dict]):
         for token_info in prices:
             for token_name, timestamp_and_price in token_info.items():
                 for timestamp, price in timestamp_and_price:
                     self._dataframe.loc[timestamp, f"{token_name}_price"] = price
-                    self._dataframe = self._dataframe.interpolate(method="linear")
+        # self._dataframe = self._dataframe.interpolate(method="linear")  # better delete interpolate ?
 
 
 class PriceFetcher:
     def __init__(self, period: TimePeriod):
         self._period = period
 
+    @timing_decorator
     async def fetch_prices(
-        self, dataframe: pd.DataFrame, tokens: list[str]
+            self, tokens: list[str]
     ) -> Sequence[dict]:
-        price_tasks = [self._get_token_prices(token) for token in tokens]
-        return await asyncio.gather(*price_tasks)
+        results = []
+        price_tasks = [asyncio.create_task(self._get_token_prices(token)) for token in tokens]
+        for task in asyncio.as_completed(price_tasks):
+            token_prices = await task
+            results.append(token_prices)
+        return results
 
     async def _get_token_prices(self, token: str) -> dict:
         request = await CoinGekoAPI.get_token_price_history(
@@ -130,9 +132,7 @@ class PriceFetcher:
         formatted_values = []
         for raw_timestamp, price in prices:
             timestamp_without_ms = int(raw_timestamp / 1000)
-            timestamp = (
-                timestamp_without_ms // self._period.divider * self._period.divider
-            )
+            timestamp = timestamp_without_ms // self._period.divider * self._period.divider
             formatted_values.append((timestamp, price))
         return formatted_values
 
@@ -143,13 +143,12 @@ class CostCalculator:
         dataframe["total_value"] = 0
 
         for token in tokens:
-            quantity_col = token
             price_col = f"{token}_price"
 
             quantity = dataframe[token].fillna(0)
             price = dataframe[price_col].fillna(0)
 
-            if quantity_col in dataframe.columns and price_col in dataframe.columns:
+            if token in dataframe.columns and price_col in dataframe.columns:
                 dataframe["total_value"] += quantity * price
 
         json_data = dataframe["total_value"].to_json(orient="index")
@@ -169,7 +168,7 @@ class GraphMaker:
         self.processor.add_transactions_in_df(base_df)
 
         tokens = self._extract_tokens_symbols(self.processor.dataframe)
-        prices = await self.price_fetcher.fetch_prices(self.processor.dataframe, tokens)
+        prices = await self.price_fetcher.fetch_prices(tokens)
         self.processor.add_price_in_df(prices)
         json_graph = self.calculator.calculate_total_cost(
             self.processor.dataframe, tokens
