@@ -1,5 +1,5 @@
 from modules.cryptos.crypto.coin_market_cup_API import CoinMarketCupAPI
-from modules.cryptos.crypto.crypto_storage import redis_manager
+from modules.common.redis_storage import redis_manager
 from src.utils.time_manager import timing_decorator
 
 

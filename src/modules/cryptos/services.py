@@ -1,4 +1,5 @@
 from base.base_model import Token, OperationEnum
+from core.decorators import timeit
 from src.base.base_repository import AbstractRepository
 from src.modules.cryptos.repository import (
     crypro_transactions_repository,
@@ -31,12 +32,11 @@ class CryptoService(BaseService):
         return added_transaction
 
     async def update_transaction(
-            self, transaction: TransactionAdd, user: User, pk: int
+        self, transaction: TransactionAdd, user: User, id_: int
     ):
         transaction_with_user_id = transaction.model_copy(update={"user_id": user.id})
         added_transaction = await self.crypto_repo.update(
-            transaction_with_user_id,
-            id=pk
+            transaction_with_user_id, id=id_
         )
         return added_transaction
 
@@ -57,8 +57,14 @@ class CryptoService(BaseService):
     async def get_token_balance(self, user: User, token_id: int):
         transactions = await self.get_user_transactions(user)
 
-        token_balance = sum(transaction.quantity if transaction.operation == OperationEnum.BUY else -transaction.quantity
-                            for transaction in transactions if transaction.token.id == token_id)
+        token_balance = sum(
+            transaction.quantity
+            if transaction.operation == OperationEnum.BUY
+            else -transaction.quantity
+            for transaction in transactions
+            if transaction.token.id == token_id
+        )
+
         return token_balance
 
 
@@ -69,6 +75,7 @@ class TokenService(BaseService):
     async def get_single(self, pk: int) -> Token:
         return await self.token_repo.get_single(id=pk)
 
+    @timeit
     async def update_token_list(self):
         updated_tokens = await CoinGekoAPI.get_token_list()
         await self.token_repo.insert_multi(updated_tokens)

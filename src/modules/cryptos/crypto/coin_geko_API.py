@@ -44,6 +44,3 @@ class CoinGekoAPI:
         return data
 
 
-# print(asyncio.run(CoinGekoAPI.get_token_list()))
-# print(asyncio.run(CoinGekoAPI.get_token_price_history('bitcoin')))
-# print(len(asyncio.run(CoinGekoAPI.get_all_token_info())))

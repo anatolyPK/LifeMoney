@@ -1,7 +1,7 @@
 from utils.redis_manager import redis_client
 
 
-class RedisCryptoKeys:
+class RedisKeysGetter:
     @staticmethod
     def _get_current_price_key(item_id) -> str:
         return f"prices:current:{item_id}"
@@ -11,20 +11,20 @@ class RedisCryptoKeys:
         return f"prices:historical:daily:{item_id}:{timestamp}"
 
 
-class RedisCryptoManager(RedisCryptoKeys):
+class RedisManager(RedisKeysGetter):
     def __init__(self, _redis_client):
         self._client = _redis_client
 
-    async def set_current_price(self, item_id, price):
+    async def set_current_price(self, item_id: str, price: str):
         key = self._get_current_price_key(item_id.lower())
         await self._client.set(key, price)
 
-    async def get_current_price(self, item_id) -> float:
+    async def get_current_price(self, item_id: str) -> float:
         key = self._get_current_price_key(item_id.lower())
         price: str = await self._client.get(key)
         return float(price) if price else 0
 
-    async def set_historical_price(self, item_id, price, timestamp):
+    async def set_historical_price(self, item_id: str, price: str, timestamp):
         key = self._get_historical_price_key(item_id, timestamp)
         await self._client.set(key, price)
 
@@ -33,4 +33,4 @@ class RedisCryptoManager(RedisCryptoKeys):
         await self._client.get(key)
 
 
-redis_manager = RedisCryptoManager(redis_client)
+redis_manager = RedisManager(redis_client)

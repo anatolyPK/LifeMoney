@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends
 
+from modules.cryptos.crypto.pricer import set_actual_crypto_price
+from modules.stocks.schemas import UpdateTimeInfoSchema
 from src.modules.cryptos.schemas import (
     TransactionRead,
     TransactionAdd,
-    CryptoPortfolio,
-    TokenSchema,
+    TokenSchema, CryptoPortfolioSchema,
 )
+from modules.common.schemas import BasePortfolioSchema
 from src.modules.cryptos.services import crypto_service, token_service
 from src.users.dependencies import get_current_active_user, get_current_superuser
 from src.base.base_model import User
@@ -18,12 +20,10 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=CryptoPortfolio)
+@router.get("/", response_model=CryptoPortfolioSchema)
 async def crypto_portfolio(user: User = Depends(get_current_active_user)):
     # await set_actual_crypto_price()
     portfolio = await crypto_service.get_user_portfolio(user)
-    # await set_actual_crypto_price_no_redis()
-    # print(await redis_manager.get_current_price('BTC'))
     return portfolio
 
 
@@ -35,8 +35,8 @@ async def crypto_transactions(user: User = Depends(get_current_active_user)):
 
 @router.post("/transactions", response_model=TransactionRead)
 async def add_crypto_transactions(
-        transaction: TransactionAdd,
-        user: User = Depends(get_current_active_user),
+    transaction: TransactionAdd,
+    user: User = Depends(get_current_active_user),
 ):
     """
     Передавать без user_id
@@ -45,9 +45,9 @@ async def add_crypto_transactions(
     return new_transaction
 
 
-@router.patch("/transactions/{pk}", response_model=TransactionRead)
+@router.patch("/transactions/{id}", response_model=TransactionRead)
 async def update_crypto_transactions(
-    pk: int,
+    id: int,
     transaction: TransactionAdd,
     user: User = Depends(get_current_active_user),
 ):
@@ -55,23 +55,26 @@ async def update_crypto_transactions(
     Передавать без user_id
     """
 
-    new_transaction = await crypto_service.update_transaction(transaction, user, pk)
+    new_transaction = await crypto_service.update_transaction(transaction, user, id)
     return new_transaction
 
 
-@router.get("/token/update", status_code=200)
+@router.get("/token/update", status_code=200, response_model=UpdateTimeInfoSchema)
 async def update_token_list(user: User = Depends(get_current_superuser)):
-    await token_service.update_token_list()
-
+    operation_time = await token_service.update_token_list()
+    return UpdateTimeInfoSchema(operation_time_in_sec=operation_time)
 
 @router.get("/token/balance", status_code=200)
-async def get_users_token_balance(token_id: int, user: User = Depends(get_current_active_user)) -> float:
+async def get_users_token_balance(
+    token_id: int, user: User = Depends(get_current_active_user)
+) -> float:
     balance = await crypto_service.get_token_balance(user, token_id)
     return balance
 
+
 @router.get("/token/search", status_code=200, response_model=list[TokenSchema])
 async def search_token(
-        token_symbol: str, user: User = Depends(get_current_active_user)
+    token_symbol: str, user: User = Depends(get_current_active_user)
 ):
     return await token_service.search_token(token_symbol)
 
@@ -81,4 +84,4 @@ async def get_graph(
     time_period: TimePeriod, user: User = Depends(get_current_active_user)
 ):
     graph = await crypto_service.get_graph(time_period, user)
-    return {"ok": graph}
+    return {"graph_data": graph}

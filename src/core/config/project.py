@@ -31,6 +31,7 @@ class AuthJWT(BaseModel):
 class ApiKeys(BaseSettings):
     API_KEY_CMC: str
     API_KEY_CG: str
+    API_KEY_TINKOFF: str
 
 
 class Redis(BaseSettings):

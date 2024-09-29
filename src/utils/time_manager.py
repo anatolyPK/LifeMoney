@@ -2,6 +2,7 @@ import time
 import asyncio
 from functools import wraps
 
+
 def timing_decorator(func):
     @wraps(func)
     async def async_wrapper(*args, **kwargs):

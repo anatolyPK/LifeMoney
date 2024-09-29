@@ -28,6 +28,19 @@ class SqlAlchemyRepository(
             await session.refresh(instance)
             return instance
 
+    async def create_multi(self, data: list[CreateSchemaType]):
+        async with self._session() as session:
+            session.add_all(data)
+            await session.commit()
+
+    async def check_existing_records(self, unique_field: str, values: list) -> set:
+        async with self._session() as session:
+            result = await session.execute(
+                select(self.model).where(getattr(self.model, unique_field).in_(values))
+            )
+            existing_records = result.scalars().all()
+            return {getattr(record, unique_field) for record in existing_records}
+
     async def update(self, data: UpdateSchemaType, **filters) -> ModelType:
         async with self._session() as session:
             stmt = (

@@ -12,6 +12,6 @@
 #     token_2: Mapped[str] = mapped_column(String(16))
 #     quantity: Mapped[float]
 #     is_buy_or_sell: Mapped[bool] = mapped_column(default=True)
-#     price_in_usd: Mapped[float] = mapped_column(default=0)
+#     price: Mapped[float] = mapped_column(default=0)
 #
 #     user: Mapped['src.auth.models.User'] = relationship(back_populates='crypto_transactions')

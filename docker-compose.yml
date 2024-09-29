@@ -17,8 +17,7 @@ services:
       - POSTGRES_PASSWORD
       - PYTHONPATH=/code/src
     command: >
-      sh -c "alembic -c src/core/db/alembic.ini upgrade head 
-      && uvicorn src.main:app --host 0.0.0.0 --port 8000"
+      sh -c "uvicorn src.main:app --host 0.0.0.0 --port 8000"
     depends_on:
       - database
 

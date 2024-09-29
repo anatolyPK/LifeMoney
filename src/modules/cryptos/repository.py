@@ -1,6 +1,11 @@
+from typing import Type
+
+from pydantic import BaseModel
 from sqlalchemy import select, case
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from base.base_model import Token
+from modules.common.repository import AssetSearchManager
 from modules.cryptos.schemas import TransactionRead
 from src.core.db.database import db_helper
 from src.base.base_model import CryptoTransaction
@@ -11,9 +16,7 @@ from src.modules.cryptos.schemas import (
 )
 
 
-class CryptoRepository(
-    SqlAlchemyRepository[ModelType, TransactionAdd, TransactionAdd]
-):
+class CryptoRepository(SqlAlchemyRepository[ModelType, TransactionAdd, TransactionAdd]):
     async def get_transactions(
         self, order: str = "id", limit: int = 100, offset: int = 0, **filters
     ) -> list[TransactionRead]:
@@ -33,58 +36,26 @@ class CryptoRepository(
             return row.scalars().all()
 
 
-class TokenRepository(
-    SqlAlchemyRepository[ModelType, TransactionAdd, TransactionAdd]
-):
+class TokenRepository(SqlAlchemyRepository[ModelType, TransactionAdd, TransactionAdd]):
+    def __init__(self, model: Type[ModelType], db_session: AsyncSession, dto_schema: Type[BaseModel]):
+        super().__init__(model, db_session)
+        self._asset_searcher = AssetSearchManager(model=model, session=db_session, dto_schema=dto_schema)
+
     async def insert_multi(self, tokens: list[dict]):
         async with self._session() as session:
-            token_objects = [
+            existing_cg_id = await self.check_existing_records('cg_id', [token["id"] for token in tokens])
+            orm_data = [
                 Token(
                     cg_id=token["id"][:64],
                     name=token["name"][:64],
                     symbol=token["symbol"][:16],
                 )
-                for token in tokens
+                for token in tokens if token["id"] not in existing_cg_id
             ]
-            session.add_all(token_objects)
-            await session.commit()
+            await super().create_multi(orm_data)
 
     async def search_token(self, token_symbol: str) -> list[TokenSchema]:
-        async with self._session() as session:
-            ilike_expr = self.model.symbol.ilike(f"%{token_symbol.strip()}%")
-            stmt = select(self.model).where(ilike_expr)
-
-            stmt = (
-                stmt.order_by(
-                    case(
-                        (self.model.symbol == token_symbol.strip(), 0),
-                        (
-                            self.model.symbol.ilike(
-                                f"{token_symbol.strip()}%",
-                            ),
-                            1,
-                        ),
-                        else_=2,
-                    ),
-                    self.model.symbol,
-                )
-                .limit(100)
-                .offset(0)
-            )
-
-            result_orm = await session.scalars(stmt)
-
-            result_dto = [
-                TokenSchema(
-                    id=token.id,
-                    name=token.name,
-                    symbol=token.symbol,
-                    cg_id=token.cg_id,
-                )
-                for token in result_orm
-            ]
-
-            return result_dto
+        return await self._asset_searcher.search_asset(token_symbol)
 
 
 crypro_transactions_repository = CryptoRepository(
@@ -92,5 +63,7 @@ crypro_transactions_repository = CryptoRepository(
 )
 
 token_repository = TokenRepository(
-    model=Token, db_session=db_helper.get_db_session_context
+    model=Token,
+    db_session=db_helper.get_db_session_context,
+    dto_schema=TokenSchema
 )

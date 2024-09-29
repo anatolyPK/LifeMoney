@@ -5,12 +5,14 @@ Revises:
 Create Date: 2024-09-10 13:23:37.275537
 
 """
-
+import uuid
 from datetime import datetime
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+
+from src.core.security import hash_password
 
 # revision identifiers, used by Alembic.
 revision: str = "9107fcb60007"
@@ -41,7 +43,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table(
+    user_table = op.create_table(
         "user",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("username", sa.String(length=16), nullable=False),
@@ -66,7 +68,7 @@ def upgrade() -> None:
         sa.Column(
             "operation", sa.Enum("BUY", "SELL", name="operationenum"), nullable=False
         ),
-        sa.Column("price_in_usd", sa.Float(), nullable=False),
+        sa.Column("price", sa.Float(), nullable=False),
         sa.Column("timestamp", sa.Integer(), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
@@ -103,6 +105,24 @@ def upgrade() -> None:
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow(),
             },
+        ],
+    )
+    hashed_password = hash_password('string').decode()
+    op.bulk_insert(
+        user_table,
+        [
+            {
+                "id": uuid.uuid4(),
+                "username": "string",
+                "email": "user@example.com",
+                "hashed_password": hashed_password,
+                "is_active": True,
+                "is_superuser": True,
+                "is_verified": True,
+                "role_id": 1,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            }
         ],
     )
     # ### end Alembic commands ###

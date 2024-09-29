@@ -55,17 +55,17 @@ class DataFrameMaker:
         date_range = pd.date_range(
             start=start_date, end=dt_now, freq=self._period.time_step, tz=tz.tzlocal()
         )
-        unix_timestamps = date_range.astype("int64") // 10 ** 9
+        unix_timestamps = date_range.astype("int64") // 10**9
         dataframe = pd.DataFrame(index=unix_timestamps)
         return dataframe
 
 
 class TransactionProcessor:
     def __init__(
-            self,
-            transactions: list[TransactionRead],
-            period: TimePeriod,
-            dataframe: pd.DataFrame | None = None,
+        self,
+        transactions: list[TransactionRead],
+        period: TimePeriod,
+        dataframe: pd.DataFrame | None = None,
     ):
         self._transactions = transactions
         self._period = period
@@ -84,15 +84,21 @@ class TransactionProcessor:
     def _process_transaction(self, transaction: TransactionRead):
         nearest_timestamp = self._round_timestamp(transaction.timestamp)
         if transaction.token.cg_id in self._dataframe.columns:
-            self._dataframe.loc[self._dataframe.index >= nearest_timestamp, transaction.token.cg_id] += (
+            self._dataframe.loc[
+                self._dataframe.index >= nearest_timestamp, transaction.token.cg_id
+            ] += (
                 transaction.quantity
-                if transaction.operation == OperationEnum.BUY # sel process
+                if transaction.operation == OperationEnum.BUY  # sel process
                 else -transaction.quantity
             )
         else:
-            self._dataframe.loc[self._dataframe.index >= nearest_timestamp, transaction.token.cg_id] = transaction.quantity
-            self._dataframe.loc[self._dataframe.index >= nearest_timestamp, f"{transaction.token.cg_id}_price"] = 0
-
+            self._dataframe.loc[
+                self._dataframe.index >= nearest_timestamp, transaction.token.cg_id
+            ] = transaction.quantity
+            self._dataframe.loc[
+                self._dataframe.index >= nearest_timestamp,
+                f"{transaction.token.cg_id}_price",
+            ] = 0
 
     def _round_timestamp(self, timestamp: int) -> int:
         return timestamp // self._period.divider * self._period.divider
@@ -111,11 +117,11 @@ class PriceFetcher:
         self._period = period
 
     @timing_decorator
-    async def fetch_prices(
-            self, tokens: list[str]
-    ) -> Sequence[dict]:
+    async def fetch_prices(self, tokens: list[str]) -> Sequence[dict]:
         results = []
-        price_tasks = [asyncio.create_task(self._get_token_prices(token)) for token in tokens]
+        price_tasks = [
+            asyncio.create_task(self._get_token_prices(token)) for token in tokens
+        ]
         for task in asyncio.as_completed(price_tasks):
             token_prices = await task
             results.append(token_prices)
@@ -132,7 +138,9 @@ class PriceFetcher:
         formatted_values = []
         for raw_timestamp, price in prices:
             timestamp_without_ms = int(raw_timestamp / 1000)
-            timestamp = timestamp_without_ms // self._period.divider * self._period.divider
+            timestamp = (
+                timestamp_without_ms // self._period.divider * self._period.divider
+            )
             formatted_values.append((timestamp, price))
         return formatted_values
 
@@ -152,7 +160,6 @@ class CostCalculator:
                 dataframe["total_value"] += quantity * price
 
         json_data = dataframe["total_value"].to_json(orient="index")
-        print("JSON_DATA", json_data)
         return json_data
 
 
