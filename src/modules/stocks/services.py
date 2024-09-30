@@ -4,8 +4,6 @@ from itertools import chain
 from operator import attrgetter
 from typing import Optional
 
-from pandas.io.formats.format import return_docstring
-
 from base.base_model import OperationEnum
 from modules.stocks.portfolio import StockPortfolioMaker
 from modules.stocks.repository import (
