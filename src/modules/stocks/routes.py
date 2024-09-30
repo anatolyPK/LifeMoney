@@ -27,10 +27,7 @@ router = APIRouter(
 async def stock_portfolio(user: User = Depends(get_current_active_user)):
     await set_actual_stock_price()
     portfolio = await stock_service.get_user_portfolio(user)
-    print(portfolio)
     price = await redis_manager.get_current_price('BBG00475KKY8')
-    print('PRICEEEEEEEEEEEEE')
-    print(price)
     return portfolio
 
 
@@ -52,25 +49,24 @@ async def add_stock_transactions(
     return new_transaction
 
 
-@router.patch("/transactions/{pk}", response_model=TransactionRead)
-async def update_crypto_transactions(
-    pk: int,
-    transaction: TransactionAdd,
+@router.patch("/transactions/{id}", response_model=ReadTransactionSchema, response_model_exclude_none=True)
+async def update_stock_transactions(
+    id: int,
+    transaction: AddTransactionSchema,
     user: User = Depends(get_current_active_user),
 ):
     """
     Передавать без user_id
     """
-
-    new_transaction = await crypto_service.update_transaction(transaction, user, pk)
+    new_transaction = await stock_service.update_transaction(transaction, user, id)
     return new_transaction
 
 
-@router.get("/token/balance", status_code=200)
-async def get_users_token_balance(
-    token_id: int, user: User = Depends(get_current_active_user)
+@router.get("/asset/balance", status_code=200)
+async def get_user_asset_balance(
+    figi: str, user: User = Depends(get_current_active_user)
 ) -> float:
-    balance = await crypto_service.get_token_balance(user, token_id)
+    balance = await stock_service.get_asset_balance(user, figi)
     return balance
 
 
@@ -87,12 +83,12 @@ async def search_assets(
     return await stock_service.search_asset(asset_symbol)
 
 
-@router.get("/graph", status_code=200)  # , response_model=list[TokenSchema])
-async def get_graph(
-    time_period: TimePeriod, user: User = Depends(get_current_active_user)
-):
-    graph = await crypto_service.get_graph(time_period, user)
-    return {"ok": graph}
+# @router.get("/graph", status_code=200)  # , response_model=list[TokenSchema])
+# async def get_graph(
+#     time_period: TimePeriod, user: User = Depends(get_current_active_user)
+# ):
+#     graph = await crypto_service.get_graph(time_period, user)
+#     return {"ok": graph}
 
 
 @router.get("/update_assets", status_code=200, response_model=UpdateTimeInfoSchema)

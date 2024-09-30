@@ -28,6 +28,28 @@ from src.modules.stocks.utils import (
 class StockTransactionsRepository(
     SqlAlchemyRepository[ModelType, TransactionAdd, TransactionAdd]
 ):
+    async def update(self, transaction: AddTransactionSchema, id=id):
+        transaction_data = transaction.model_dump(exclude_none=True)
+
+        transaction_map = {
+            'share_id': (AddShareSchema, share_transaction_repository),
+            'bond_id': (AddBondSchema, bond_transaction_repository),
+            'etf_id': (AddEtfSchema, etf_transaction_repository),
+            'currency_id': (AddCurrencySchema, currency_transaction_repository),
+            'future_id': (AddFutureSchema, future_transaction_repository),
+        }
+
+        for id_key, (schema, repository) in transaction_map.items():
+            if getattr(transaction, id_key) > 0:
+                transaction_instance = schema(
+                    **transaction_data,
+                    asset_id=transaction_data.get(id_key)
+                )
+                await repository.update(transaction_instance, id=id)
+                return await repository.get_single(id=id)
+
+        raise MissingTransactionIdError
+
     async def create_transaction(self, transaction: AddTransactionSchema):
         transaction_data = transaction.model_dump(exclude_none=True)
 

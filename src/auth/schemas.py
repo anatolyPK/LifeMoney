@@ -38,8 +38,8 @@ class RefreshTokenCreate(BaseModel):
     @classmethod
     def set_should_deleted_at(cls, v):
         if v is None:
-            refresh_token_expire_days = settings.auth_jwt.refresh_token_expire_days
+            REFRESH_TOKEN_EXPIRE_DAYS = settings.auth_jwt.REFRESH_TOKEN_EXPIRE_DAYS
             now = datetime.now(timezone.utc)
-            expire = now + timedelta(days=refresh_token_expire_days)
+            expire = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
             return expire.replace(tzinfo=None)
         return v

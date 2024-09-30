@@ -7,6 +7,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 
 from core.config.project import settings
+from core.middlewares import add_process_time_header
 from routing.routes import get_apps_router
 from utils.redis_manager import redis_client
 
@@ -28,7 +29,6 @@ def get_application() -> FastAPI:
         lifespan=lifespan,
     )
     application.include_router(get_apps_router())
-
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ALLOWED_ORIGINS,
@@ -36,6 +36,7 @@ def get_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    application.middleware("http")(add_process_time_header)
 
     return application
 

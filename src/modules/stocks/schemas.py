@@ -110,7 +110,6 @@ class AddFutureSchema(BaseTransactionSchema):
 class ReadTransactionSchema(BaseTransactionSchema):
     id: int
 
-    # asset: Union[ShareSchema, BondSchema, EtfSchema, CurrencySchema, FutureSchema]
     share: Optional[ShareSchema] = None
     bond: Optional[BondSchema] = None
     etf: Optional[EtfSchema] = None

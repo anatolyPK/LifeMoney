@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import BaseModel
 
 from pydantic_settings import BaseSettings
 
@@ -12,13 +11,14 @@ load_dotenv()
 BASE_DIR = Path(__file__).parent.parent
 
 
-class AuthJWT(BaseModel):
+class AuthJWT(BaseSettings):
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+    RESET_TOKEN_EXPIRE_MINUTES: int
+
     private_key_path: Path = BASE_DIR / "certs" / "jwt-private.pem"
     public_key_path: Path = BASE_DIR / "certs" / "jwt-public.pem"
     algorithm: str = "RS256"
-    access_token_expire_minutes: int = 60
-    refresh_token_expire_days: int = 30
-    reset_token_expire_minutes: int = 60
 
     TOKEN_TYPE_FIELD: str = "type"
     ACCESS_TOKEN_TYPE: str = "access"

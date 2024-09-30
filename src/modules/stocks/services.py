@@ -2,6 +2,9 @@ import asyncio
 import time
 from itertools import chain
 from operator import attrgetter
+from typing import Optional
+
+from pandas.io.formats.format import return_docstring
 
 from base.base_model import OperationEnum
 from modules.stocks.portfolio import StockPortfolioMaker
@@ -48,7 +51,6 @@ class StockService(BaseService):
             futures=results[4],
         )
 
-    @timeit
     async def update_assets(self):
         asset_fetchers = {
             share_service: TinkoffAPI.get_shares,
@@ -66,14 +68,8 @@ class StockService(BaseService):
             result = await fetch_task
             await asset_service.repository.create_multi(result["instruments"])
 
-
     async def get_user_transactions(self, user: User) -> list[ReadTransactionSchema]:
-        transactions = await self.repository.get_user_transaction(user_id=user.id)
-        # values = [transaction.values() for transaction in transactions]
-        # print('transactionssssssssssssssss')
-        # print(values)
-        # sorted_values = sorted(values, key=attrgetter('timestamp'), reverse=True)
-        return transactions
+        return await self.repository.get_user_transaction(user_id=user.id)
 
     async def get_user_portfolio(self, user: User):
         transactions: list[ReadTransactionSchema] = await self.get_user_transactions(user)
@@ -87,17 +83,13 @@ class StockService(BaseService):
         return added_transaction
 
     async def update_transaction(
-            self, transaction: TransactionAdd, user: User, pk: int
+            self, transaction: AddTransactionSchema, user: User, id: int
     ):
         transaction_with_user_id = transaction.model_copy(update={"user_id": user.id})
-        added_transaction = await self.crypto_repo.update(
-            transaction_with_user_id, id=pk
+        added_transaction = await self.repository.update(
+            transaction_with_user_id, id=id
         )
         return added_transaction
-
-    async def get_unique_tokens(self):
-        tokens = await self.crypto_repo.get_unique_tokens("token_1")
-        return tokens
 
     async def get_graph(self, time_period: TimePeriod, user: User):
         transactions = await self.get_user_transactions(user)
@@ -105,50 +97,36 @@ class StockService(BaseService):
         graph_data = await graph_maker.count_assets_cost()
         return graph_data
 
-    async def get_token_balance(self, user: User, token_id: int):
+    async def get_asset_balance(self, user: User, figi: str):
         transactions = await self.get_user_transactions(user)
 
         token_balance = sum(
-            transaction.quantity
-            if transaction.operation == OperationEnum.BUY
+            transaction.quantity if transaction.operation == OperationEnum.BUY
             else -transaction.quantity
             for transaction in transactions
-            if transaction.token.id == token_id
+            if self._get_figi(transaction) == figi
         )
 
         return token_balance
 
+    def _get_figi(self, transaction: ReadTransactionSchema) -> Optional[str]:
+        return next((asset.figi for asset in (
+            transaction.share, transaction.bond, transaction.etf, transaction.currency, transaction.future
+        ) if asset), None)
+
+
     async def get_assets_price(self) -> dict:
-        tasks = [asset_service.repository.get_unique_figis()
+        tasks = [
+            asset_service.repository.get_unique_figis()
                  for asset_service in (share_transaction_service, bond_transaction_service, etf_transaction_service,
-                                       currency_transaction_service, future_transaction_service)]
+                                       currency_transaction_service, future_transaction_service)
+        ]
         figis = await asyncio.gather(*tasks)
         flat_figis = list(chain.from_iterable(figis))
 
         prices_from_api = await TinkoffAPI.get_current_prices(flat_figis)
         return prices_from_api
-# class AssetService(BaseService):
-#     def __init__(self, repository: AbstractRepository):
-#         super().__init__(repository)
-#
-#         self.asset_fetchers = {
-#             'shares': TinkoffAPI.get_shares,
-#             'bonds': TinkoffAPI.get_bonds,
-#             'etfs': TinkoffAPI.get_etfs,
-#             'currencies': TinkoffAPI.get_currencies,
-#             'futures': TinkoffAPI.get_futures,
-#         }
-#
-#     async def update_all_assets(self):
-#         ...
-#
-#     async def _update_assets(self, asset_type: str):
-#         fetcher = self.asset_fetchers.get(self.asset_type)
-#         if fetcher is None:
-#             raise ValueError("Unknown asset type")
-#
-#         assets = await fetcher()
-#         await self.repository.create_multi(assets)
+
 
 
 share_service = BaseService(repository=share_repository)
@@ -162,8 +140,6 @@ currency_service = BaseService(repository=currency_repository)
 future_service = BaseService(repository=future_repository)
 
 stock_service = StockService(stock_repo=stock_repository)
-
-
 
 share_transaction_service = BaseService(repository=share_transaction_repository)
 

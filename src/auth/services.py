@@ -38,7 +38,7 @@ class TokenManager(BaseService):
         return create_jwt(
             token_type=settings.auth_jwt.ACCESS_TOKEN_TYPE,
             token_data=jwt_payload,
-            expire_minutes=settings.auth_jwt.access_token_expire_minutes,
+            expire_minutes=settings.auth_jwt.ACCESS_TOKEN_EXPIRE_MINUTES,
         )
 
     async def _create_refresh_token(
@@ -53,7 +53,7 @@ class TokenManager(BaseService):
             token_type=settings.auth_jwt.REFRESH_TOKEN_TYPE,
             token_data=jwt_payload,
             expire_timedelta=timedelta(
-                days=settings.auth_jwt.refresh_token_expire_days
+                days=settings.auth_jwt.REFRESH_TOKEN_EXPIRE_DAYS
             ),
         )
 
@@ -82,7 +82,7 @@ class TokenManager(BaseService):
         reset_token = create_jwt(
             token_type=settings.auth_jwt.RESET_TOKEN_TYPE,
             token_data=jwt_payload,
-            expire_minutes=settings.auth_jwt.reset_token_expire_minutes,
+            expire_minutes=settings.auth_jwt.RESET_TOKEN_EXPIRE_MINUTES,
         )
         return reset_token
 
