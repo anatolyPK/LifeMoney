@@ -22,16 +22,10 @@ class TinkoffAPI:
     @classmethod
     async def get_current_prices(cls, figis: list[str]) -> dict[list[Optional[dict]]]:
         url = f"{cls._base_url}MarketDataService/GetLastPrices"
-        print(figis)
         response_text = await AsyncSession.post(
-            url=url,
-            headers=cls._headers,
-            params=cls._parameters,
-            data={"figi": figis}
+            url=url, headers=cls._headers, params=cls._parameters, data={"figi": figis}
         )
         data = json.loads(response_text)
-        print('DATAAAAAAAAAAAAAAA')
-        print(data)
         return data
 
     @classmethod

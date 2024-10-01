@@ -1,14 +1,15 @@
 import uuid
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
-from modules.common.schemas import BaseTransactionSchema, BaseAsset, BasePortfolioSchema, BasePortfolioAsset
-
-
-class UpdateTimeInfoSchema(BaseModel):
-    operation_time_in_sec: float
+from modules.common.schemas import (
+    BaseTransactionSchema,
+    BaseAsset,
+    BasePortfolioSchema,
+    BasePortfolioAsset,
+)
 
 
 class BaseStockAssetSchema(BaseAsset):
@@ -98,9 +99,11 @@ class AddEtfSchema(BaseTransactionSchema):
     user_id: uuid.UUID
     etf_id: int
 
+
 class AddCurrencySchema(BaseTransactionSchema):
     user_id: uuid.UUID
     currency_id: int
+
 
 class AddFutureSchema(BaseTransactionSchema):
     user_id: uuid.UUID

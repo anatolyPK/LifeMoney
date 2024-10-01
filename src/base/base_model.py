@@ -65,11 +65,21 @@ class User(Base):
     refresh_tokens: Mapped[List["RefreshToken"]] = relationship(
         back_populates="rt_user"
     )
-    share_transactions: Mapped[list["ShareTransaction"]] = relationship(back_populates="user")
-    bond_transactions: Mapped[list["BondTransaction"]] = relationship(back_populates="user")
-    etf_transactions: Mapped[list["EtfTransaction"]] = relationship(back_populates="user")
-    currency_transactions: Mapped[list["CurrencyTransaction"]] = relationship(back_populates="user")
-    future_transactions: Mapped[list["FutureTransaction"]] = relationship(back_populates="user")
+    share_transactions: Mapped[list["ShareTransaction"]] = relationship(
+        back_populates="user"
+    )
+    bond_transactions: Mapped[list["BondTransaction"]] = relationship(
+        back_populates="user"
+    )
+    etf_transactions: Mapped[list["EtfTransaction"]] = relationship(
+        back_populates="user"
+    )
+    currency_transactions: Mapped[list["CurrencyTransaction"]] = relationship(
+        back_populates="user"
+    )
+    future_transactions: Mapped[list["FutureTransaction"]] = relationship(
+        back_populates="user"
+    )
 
 
 class Role(Base):
@@ -156,7 +166,10 @@ class Share(CommonAssetsInfo):
     sector: Mapped[str]
     div_yield_flag: Mapped[bool]
 
-    transactions: Mapped[list["ShareTransaction"]] = relationship(back_populates="share")
+    transactions: Mapped[list["ShareTransaction"]] = relationship(
+        back_populates="share"
+    )
+
 
 class Bond(CommonAssetsInfo):
     __tablename__ = "bond"
@@ -191,7 +204,9 @@ class Currency(CommonAssetsInfo):
     nominal: Mapped[float]
     country_of_risk: Mapped[str]
     min_price_increment: Mapped[float]
-    transactions: Mapped[list["CurrencyTransaction"]] = relationship(back_populates="currency")
+    transactions: Mapped[list["CurrencyTransaction"]] = relationship(
+        back_populates="currency"
+    )
 
 
 class Future(CommonAssetsInfo):
@@ -207,7 +222,9 @@ class Future(CommonAssetsInfo):
     expiration_date: Mapped[datetime]
     min_price_increment_amount: Mapped[float]
 
-    transactions: Mapped[list["FutureTransaction"]] = relationship(back_populates="future")
+    transactions: Mapped[list["FutureTransaction"]] = relationship(
+        back_populates="future"
+    )
 
 
 class CommonAssetsTransaction(Base):
@@ -234,6 +251,7 @@ class ShareTransaction(CommonAssetsTransaction):
 
     user: Mapped["User"] = relationship(back_populates="share_transactions")
 
+
 class BondTransaction(CommonAssetsTransaction):
     __tablename__ = "bond_transaction"
 
@@ -247,6 +265,7 @@ class BondTransaction(CommonAssetsTransaction):
     )
 
     user: Mapped["User"] = relationship(back_populates="bond_transactions")
+
 
 class EtfTransaction(CommonAssetsTransaction):
     __tablename__ = "etf_transaction"
@@ -266,7 +285,9 @@ class EtfTransaction(CommonAssetsTransaction):
 class CurrencyTransaction(CommonAssetsTransaction):
     __tablename__ = "currency_transaction"
 
-    currency_id: Mapped[int] = mapped_column(ForeignKey("currency.id", ondelete="CASCADE"))
+    currency_id: Mapped[int] = mapped_column(
+        ForeignKey("currency.id", ondelete="CASCADE")
+    )
 
     currency: Mapped[Currency] = relationship(
         "Currency",
@@ -291,5 +312,3 @@ class FutureTransaction(CommonAssetsTransaction):
     )
 
     user: Mapped["User"] = relationship(back_populates="future_transactions")
-
-

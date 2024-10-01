@@ -5,6 +5,7 @@ Revises:
 Create Date: 2024-09-10 13:23:37.275537
 
 """
+
 import uuid
 from datetime import datetime
 from typing import Sequence, Union
@@ -107,7 +108,7 @@ def upgrade() -> None:
             },
         ],
     )
-    hashed_password = hash_password('string').decode()
+    hashed_password = hash_password("string").decode()
     op.bulk_insert(
         user_table,
         [

@@ -1,6 +1,9 @@
 from utils.redis_manager import redis_client
 
 
+USDRUB_FIGI = "BBG0013HGFT4"
+
+
 class RedisKeysGetter:
     @staticmethod
     def _get_current_price_key(item_id) -> str:
@@ -30,7 +33,12 @@ class RedisManager(RedisKeysGetter):
 
     async def get_historical_price(self, item_id, timestamp):
         key = self._get_historical_price_key(item_id, timestamp)
-        await self._client.get(key)
+        return await self._client.get(key)
+
+    async def get_usdrub_currency(self):
+        key = self._get_current_price_key(USDRUB_FIGI.lower())
+        price: str = await self._client.get(key)
+        return float(price) if price else 0
 
 
 redis_manager = RedisManager(redis_client)

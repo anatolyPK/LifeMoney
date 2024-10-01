@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends
 
-from modules.cryptos.crypto.pricer import set_actual_crypto_price
-from modules.stocks.schemas import UpdateTimeInfoSchema
 from src.modules.cryptos.schemas import (
     TransactionRead,
     TransactionAdd,
-    TokenSchema, CryptoPortfolioSchema,
+    CryptoPortfolioSchema,
 )
-from modules.common.schemas import BasePortfolioSchema
+from modules.common.schemas import BaseAsset
 from src.modules.cryptos.services import crypto_service, token_service
 from src.users.dependencies import get_current_active_user, get_current_superuser
 from src.base.base_model import User
@@ -59,10 +57,11 @@ async def update_crypto_transactions(
     return new_transaction
 
 
-@router.get("/token/update", status_code=200, response_model=UpdateTimeInfoSchema)
+@router.get("/token/update", status_code=200)
 async def update_token_list(user: User = Depends(get_current_superuser)):
-    operation_time = await token_service.update_token_list()
-    return UpdateTimeInfoSchema(operation_time_in_sec=operation_time)
+    await token_service.update_token_list()
+    return {"result": "success"}
+
 
 @router.get("/token/balance", status_code=200)
 async def get_users_token_balance(
@@ -72,14 +71,14 @@ async def get_users_token_balance(
     return balance
 
 
-@router.get("/token/search", status_code=200, response_model=list[TokenSchema])
+@router.get("/token/search", status_code=200, response_model=list[BaseAsset])
 async def search_token(
     token_symbol: str, user: User = Depends(get_current_active_user)
 ):
     return await token_service.search_token(token_symbol)
 
 
-@router.get("/graph", status_code=200)  # , response_model=list[TokenSchema])
+@router.get("/graph", status_code=200)
 async def get_graph(
     time_period: TimePeriod, user: User = Depends(get_current_active_user)
 ):

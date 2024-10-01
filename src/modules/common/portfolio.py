@@ -1,10 +1,14 @@
 from src.base.base_model import OperationEnum
 from src.modules.cryptos.schemas import (
     TransactionRead,
-    TokenSchema,
 )
-from modules.common.schemas import BasePortfolioSchema, BaseAsset, BasePortfolioAsset, MainPortfolioInfo, \
-    BaseTransactionSchema
+from modules.common.schemas import (
+    BaseAsset,
+    BasePortfolioAsset,
+    MainPortfolioInfo,
+    BaseTransactionSchema,
+    CurrencyEnum,
+)
 from modules.common.redis_storage import redis_manager
 from modules.common.math import MathOperation
 
@@ -18,7 +22,6 @@ class TransactionProcessor:
         [await self._process_transaction(transaction) for transaction in transactions]
 
     async def _process_transaction(self, transaction: BaseTransactionSchema):
-        print(transaction)
         asset = self.extract_asset(transaction)
         await self.add_asset_in_portfolio(asset)
 
@@ -39,12 +42,10 @@ class TransactionProcessor:
             current_price = await redis_manager.get_current_price(asset.symbol)
             self._portfolio_maker._assets[asset.id] = self._portfolio_asset_scheme(
                 asset=asset,
-                current_price=current_price
+                current_price=current_price,
             )
 
-    def _summarize_asset(
-            self, asset: BaseAsset, quantity: float, buy_price: float
-    ):
+    def _summarize_asset(self, asset: BaseAsset, quantity: float, buy_price: float):
         portfolio_asset: BasePortfolioAsset = self._portfolio_maker._assets[asset.id]
         portfolio_asset.average_price_buy = MathOperation.get_new_average_price(
             old_average_price=portfolio_asset.average_price_buy,
@@ -59,14 +60,14 @@ class TransactionProcessor:
         portfolio_asset.quantity -= quantity
 
     def extract_asset(self, transaction: BaseTransactionSchema):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class PortfolioCalculator:
     def __init__(self, portfolio_maker: "CryptoPortfolioMaker"):
         self.portfolio_maker = portfolio_maker
 
-        self._total_value = 0
+        self._total_value_rub = 0
         self._total_investment = 0
 
     async def calculate_assets(self):
@@ -79,34 +80,59 @@ class PortfolioCalculator:
                 )
             )
 
-            self._total_value += asset.quantity * asset.current_price
-            self._total_investment += asset.quantity * asset.average_price_buy
+            current_price_in_rub = await self._get_current_price_in_rub(asset)
+            average_price_buy_in_rub = await self._get_average_price_buy_in_rub(asset)
+
+            self._total_value_rub += asset.quantity * current_price_in_rub
+            self._total_investment += asset.quantity * average_price_buy_in_rub
 
         for asset in self.portfolio_maker._assets.values():
             asset.percent_of_portfolio = MathOperation.get_asset_percent_of_portfolio(
-                portfolio_balance=self._total_value,
+                portfolio_balance=self._total_value_rub,
                 assets_balance=asset.balance,
             )
 
     def calculate_portfolio_info(self) -> MainPortfolioInfo:
         profit_in_currency, profit_in_percent = MathOperation.get_profits(
-            average_price_buy=self._total_investment, balance=self._total_value
+            average_price_buy=self._total_investment, balance=self._total_value_rub
         )
         return MainPortfolioInfo(
-            total_value=self._total_value,
+            total_value=self._total_value_rub,
             total_investment=self._total_investment,
             total_profit_in_currency=profit_in_currency,
             total_profit_in_percent=profit_in_percent,
         )
 
+    async def _get_current_price_in_rub(self, asset: BasePortfolioAsset) -> float:
+        if asset.currency_ == CurrencyEnum.usd:
+            return await self._convert_rub_in_usd(asset.current_price)
+        return asset.current_price
+
+    async def _get_average_price_buy_in_rub(self, asset: BasePortfolioAsset) -> float:
+        # //TODO вычислять значение usd на необходимую дату
+        if asset.currency_ == CurrencyEnum.usd:
+            return await self._convert_rub_in_usd(asset.average_price_buy)
+        return asset.average_price_buy
+
+    async def _convert_rub_in_usd(self, value: float) -> float:
+        return value * await redis_manager.get_usdrub_currency()
+
 
 class PortfolioMaker:
-    def __init__(self, portfolio_schema, portfolio_asset_scheme, transaction_processor: type[TransactionProcessor] = TransactionProcessor, calculator: type[PortfolioCalculator] = PortfolioCalculator):
+    def __init__(
+        self,
+        portfolio_schema,
+        portfolio_asset_scheme,
+        transaction_processor: type[TransactionProcessor] = TransactionProcessor,
+        calculator: type[PortfolioCalculator] = PortfolioCalculator,
+    ):
         self._portfolio_schema = portfolio_schema
         self._assets: dict[int, BasePortfolioAsset] = {}
         # Порог для отображения минимальной суммы активов in $
         self._low_balance_threshold = 0.1
-        self._transaction_processor = transaction_processor(self, portfolio_asset_scheme)
+        self._transaction_processor = transaction_processor(
+            self, portfolio_asset_scheme
+        )
         self._calculator = calculator(self)
 
     async def make_portfolio(self, transactions: list[TransactionRead]):
@@ -119,7 +145,6 @@ class PortfolioMaker:
     @property
     def portfolio(self):
         main_info, assets = self._get_portfolio_info()
-        print(assets)
         return self._portfolio_schema(main_info=main_info, assets=assets)
 
     def _hide_assets_with_low_balance(self) -> dict[int, BasePortfolioAsset]:

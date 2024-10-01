@@ -1,6 +1,13 @@
+import enum
+
 from pydantic import BaseModel, ConfigDict
 
 from base.base_model import OperationEnum
+
+
+class CurrencyEnum(str, enum.Enum):
+    usd: str = "usd"
+    rub: str = "rub"
 
 
 class BaseAsset(BaseModel):
@@ -10,9 +17,11 @@ class BaseAsset(BaseModel):
     name: str
     symbol: str  # or ticker
 
+
 class BasePortfolioAsset(BaseModel):
     quantity: float = 0
     average_price_buy: float = 0
+    currency_: CurrencyEnum = CurrencyEnum.usd
 
     balance: float = 0
     current_price: float = 0

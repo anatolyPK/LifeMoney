@@ -1,7 +1,7 @@
 from typing import Type
 
 from pydantic import BaseModel
-from sqlalchemy import select, case
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from base.base_model import Token
@@ -37,20 +37,30 @@ class CryptoRepository(SqlAlchemyRepository[ModelType, TransactionAdd, Transacti
 
 
 class TokenRepository(SqlAlchemyRepository[ModelType, TransactionAdd, TransactionAdd]):
-    def __init__(self, model: Type[ModelType], db_session: AsyncSession, dto_schema: Type[BaseModel]):
+    def __init__(
+        self,
+        model: Type[ModelType],
+        db_session: AsyncSession,
+        dto_schema: Type[BaseModel],
+    ):
         super().__init__(model, db_session)
-        self._asset_searcher = AssetSearchManager(model=model, session=db_session, dto_schema=dto_schema)
+        self._asset_searcher = AssetSearchManager(
+            model=model, session=db_session, dto_schema=dto_schema
+        )
 
     async def insert_multi(self, tokens: list[dict]):
         async with self._session() as session:
-            existing_cg_id = await self.check_existing_records('cg_id', [token["id"] for token in tokens])
+            existing_cg_id = await self.check_existing_records(
+                "cg_id", [token["id"] for token in tokens]
+            )
             orm_data = [
                 Token(
                     cg_id=token["id"][:64],
                     name=token["name"][:64],
                     symbol=token["symbol"][:16],
                 )
-                for token in tokens if token["id"] not in existing_cg_id
+                for token in tokens
+                if token["id"] not in existing_cg_id
             ]
             await super().create_multi(orm_data)
 
@@ -63,7 +73,5 @@ crypro_transactions_repository = CryptoRepository(
 )
 
 token_repository = TokenRepository(
-    model=Token,
-    db_session=db_helper.get_db_session_context,
-    dto_schema=TokenSchema
+    model=Token, db_session=db_helper.get_db_session_context, dto_schema=TokenSchema
 )

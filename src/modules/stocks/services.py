@@ -1,10 +1,9 @@
 import asyncio
-import time
 from itertools import chain
-from operator import attrgetter
 from typing import Optional
 
 from base.base_model import OperationEnum
+from modules.common.redis_storage import USDRUB_FIGI
 from modules.stocks.portfolio import StockPortfolioMaker
 from modules.stocks.repository import (
     stock_repository,
@@ -19,16 +18,14 @@ from modules.stocks.repository import (
     bond_transaction_repository,
     share_transaction_repository,
 )
-from modules.stocks.schemas import AssetsSearchResultsSchema, AddTransactionSchema, ReadTransactionSchema
+from modules.stocks.schemas import (
+    AssetsSearchResultsSchema,
+    AddTransactionSchema,
+    ReadTransactionSchema,
+)
 from modules.stocks.tinkoff_api import TinkoffAPI
 from src.base.base_repository import AbstractRepository
-from src.modules.cryptos.schemas import (
-    TransactionAdd,
-    TransactionRead,
-)
 from src.base.base_service import BaseService
-from src.core.decorators import timeit
-from src.modules.common.portfolio import PortfolioMaker
 from src.base.base_model import User
 from modules.cryptos.crypto.graph import TimePeriod, GraphMaker
 
@@ -38,8 +35,16 @@ class StockService(BaseService):
         self.repository: AbstractRepository = stock_repo
 
     async def search_asset(self, asset_name: str) -> AssetsSearchResultsSchema:
-        tasks = [asset_service.repository.search_asset(asset_name)
-                 for asset_service in (share_service, bond_service, etf_service, currency_service, future_service)]
+        tasks = [
+            asset_service.repository.search_asset(asset_name)
+            for asset_service in (
+                share_service,
+                bond_service,
+                etf_service,
+                currency_service,
+                future_service,
+            )
+        ]
         results = await asyncio.gather(*tasks)
         return AssetsSearchResultsSchema(
             shares=results[0],
@@ -70,18 +75,22 @@ class StockService(BaseService):
         return await self.repository.get_user_transaction(user_id=user.id)
 
     async def get_user_portfolio(self, user: User):
-        transactions: list[ReadTransactionSchema] = await self.get_user_transactions(user)
+        transactions: list[ReadTransactionSchema] = await self.get_user_transactions(
+            user
+        )
         portfolio_maker = StockPortfolioMaker()
         await portfolio_maker.make_portfolio(transactions)
         return portfolio_maker.portfolio
 
     async def add_transaction(self, transaction: AddTransactionSchema, user: User):
         transaction_with_user_id = transaction.model_copy(update={"user_id": user.id})
-        added_transaction = await self.repository.create_transaction(transaction_with_user_id)
+        added_transaction = await self.repository.create_transaction(
+            transaction_with_user_id
+        )
         return added_transaction
 
     async def update_transaction(
-            self, transaction: AddTransactionSchema, user: User, id: int
+        self, transaction: AddTransactionSchema, user: User, id: int
     ):
         transaction_with_user_id = transaction.model_copy(update={"user_id": user.id})
         added_transaction = await self.repository.update(
@@ -99,7 +108,8 @@ class StockService(BaseService):
         transactions = await self.get_user_transactions(user)
 
         token_balance = sum(
-            transaction.quantity if transaction.operation == OperationEnum.BUY
+            transaction.quantity
+            if transaction.operation == OperationEnum.BUY
             else -transaction.quantity
             for transaction in transactions
             if self._get_figi(transaction) == figi
@@ -108,23 +118,37 @@ class StockService(BaseService):
         return token_balance
 
     def _get_figi(self, transaction: ReadTransactionSchema) -> Optional[str]:
-        return next((asset.figi for asset in (
-            transaction.share, transaction.bond, transaction.etf, transaction.currency, transaction.future
-        ) if asset), None)
-
+        return next(
+            (
+                asset.figi
+                for asset in (
+                    transaction.share,
+                    transaction.bond,
+                    transaction.etf,
+                    transaction.currency,
+                    transaction.future,
+                )
+                if asset
+            ),
+            None,
+        )
 
     async def get_assets_price(self) -> dict:
         tasks = [
             asset_service.repository.get_unique_figis()
-                 for asset_service in (share_transaction_service, bond_transaction_service, etf_transaction_service,
-                                       currency_transaction_service, future_transaction_service)
+            for asset_service in (
+                share_transaction_service,
+                bond_transaction_service,
+                etf_transaction_service,
+                currency_transaction_service,
+                future_transaction_service,
+            )
         ]
         figis = await asyncio.gather(*tasks)
         flat_figis = list(chain.from_iterable(figis))
-
+        flat_figis.append(USDRUB_FIGI)
         prices_from_api = await TinkoffAPI.get_current_prices(flat_figis)
         return prices_from_api
-
 
 
 share_service = BaseService(repository=share_repository)

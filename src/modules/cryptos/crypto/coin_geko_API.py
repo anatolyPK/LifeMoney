@@ -42,5 +42,3 @@ class CoinGekoAPI:
         response_text = await AsyncSession.get(url, cls._headers, parameters)
         data = json.loads(response_text)
         return data
-
-

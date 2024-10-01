@@ -1,19 +1,14 @@
 from fastapi import APIRouter, Depends
 
-from modules.stocks.schemas import UpdateTimeInfoSchema, AssetsSearchResultsSchema, ReadTransactionSchema, \
-    AddTransactionSchema, StockPortfolioSchema
-from modules.stocks.services import stock_service
-from src.modules.cryptos.schemas import (
-    TransactionRead,
-    TransactionAdd,
-    TokenSchema,
+from modules.stocks.schemas import (
+    AssetsSearchResultsSchema,
+    ReadTransactionSchema,
+    AddTransactionSchema,
+    StockPortfolioSchema,
 )
-from src.modules.cryptos.services import crypto_service, token_service
-from src.modules.common.schemas import BasePortfolioSchema
-from src.modules.common.redis_storage import redis_manager
-from src.users.dependencies import get_current_active_user, get_current_superuser
+from modules.stocks.services import stock_service
+from src.users.dependencies import get_current_active_user
 from src.base.base_model import User
-from src.modules.cryptos.crypto.graph import TimePeriod
 from src.modules.stocks.pricer import set_actual_stock_price
 
 
@@ -27,17 +22,24 @@ router = APIRouter(
 async def stock_portfolio(user: User = Depends(get_current_active_user)):
     await set_actual_stock_price()
     portfolio = await stock_service.get_user_portfolio(user)
-    price = await redis_manager.get_current_price('BBG00475KKY8')
     return portfolio
 
 
-@router.get("/transactions", response_model=list[ReadTransactionSchema], response_model_exclude_none=True)
+@router.get(
+    "/transactions",
+    response_model=list[ReadTransactionSchema],
+    response_model_exclude_none=True,
+)
 async def stock_transactions(user: User = Depends(get_current_active_user)):
     transactions = await stock_service.get_user_transactions(user)
     return transactions
 
 
-@router.post("/transactions", response_model=ReadTransactionSchema, response_model_exclude_none=True)
+@router.post(
+    "/transactions",
+    response_model=ReadTransactionSchema,
+    response_model_exclude_none=True,
+)
 async def add_stock_transactions(
     transaction: AddTransactionSchema,
     user: User = Depends(get_current_active_user),
@@ -49,7 +51,11 @@ async def add_stock_transactions(
     return new_transaction
 
 
-@router.patch("/transactions/{id}", response_model=ReadTransactionSchema, response_model_exclude_none=True)
+@router.patch(
+    "/transactions/{id}",
+    response_model=ReadTransactionSchema,
+    response_model_exclude_none=True,
+)
 async def update_stock_transactions(
     id: int,
     transaction: AddTransactionSchema,
@@ -74,11 +80,10 @@ async def get_user_asset_balance(
     "/assets/search",
     status_code=200,
     response_model=AssetsSearchResultsSchema,
-    response_model_exclude_none=True
+    response_model_exclude_none=True,
 )
 async def search_assets(
-        asset_symbol: str,
-        user: User = Depends(get_current_active_user)
+    asset_symbol: str, user: User = Depends(get_current_active_user)
 ):
     return await stock_service.search_asset(asset_symbol)
 
@@ -91,7 +96,7 @@ async def search_assets(
 #     return {"ok": graph}
 
 
-@router.get("/update_assets", status_code=200, response_model=UpdateTimeInfoSchema)
+@router.get("/update_assets", status_code=200)
 async def update_assets(user: User = Depends(get_current_active_user)):
-    operation_time = await stock_service.update_assets()
-    return UpdateTimeInfoSchema(operation_time_in_sec=operation_time)
+    await stock_service.update_assets()
+    return {"result": "success"}

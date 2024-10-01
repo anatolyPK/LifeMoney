@@ -1,6 +1,11 @@
 from typing import Optional
 
-from modules.common.schemas import BaseTransactionSchema, BasePortfolioAsset, BaseAsset, BasePortfolioSchema
+from modules.common.schemas import (
+    BaseTransactionSchema,
+    BasePortfolioAsset,
+    BaseAsset,
+    BasePortfolioSchema,
+)
 
 
 class TokenSchema(BaseAsset):
