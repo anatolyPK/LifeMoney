@@ -9,8 +9,7 @@ from modules.stocks.schemas import (
 from modules.stocks.services import stock_service
 from src.users.dependencies import get_current_active_user
 from src.base.base_model import User
-from src.modules.stocks.pricer import set_actual_stock_price
-
+from src.modules.stocks.pricer import set_actual_stock_price, get_candles_yearly
 
 router = APIRouter(
     prefix="/stocks",
@@ -21,6 +20,7 @@ router = APIRouter(
 @router.get("/", response_model=StockPortfolioSchema, response_model_exclude_none=True)
 async def stock_portfolio(user: User = Depends(get_current_active_user)):
     await set_actual_stock_price()
+    # await get_candles_yearly()
     portfolio = await stock_service.get_user_portfolio(user)
     return portfolio
 

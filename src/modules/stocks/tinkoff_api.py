@@ -20,6 +20,25 @@ class TinkoffAPI:
     }
 
     @classmethod
+    async def get_candles(cls, figi: str, from_: str, to: str, interval: str):
+        url = f"{cls._base_url}MarketDataService/GetCandles"
+        data = {
+            'figi': figi,
+            "from": "2023-10-01T12:54:01.402Z",
+            "to": "2024-10-01T12:54:01.402Z",
+            "interval": "5"
+        }
+
+        response_text = await AsyncSession.post(
+            url=url,
+            headers=cls._headers,
+            params=cls._parameters,
+            data=data
+        )
+        data = json.loads(response_text)
+        return data
+
+    @classmethod
     async def get_current_prices(cls, figis: list[str]) -> dict[list[Optional[dict]]]:
         url = f"{cls._base_url}MarketDataService/GetLastPrices"
         response_text = await AsyncSession.post(
