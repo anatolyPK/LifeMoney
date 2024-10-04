@@ -27,7 +27,7 @@ class RedisManager(RedisKeysGetter):
         price: str = await self._client.get(key)
         return float(price) if price else 0
 
-    async def set_historical_price(self, item_id: str, price: str, timestamp):
+    async def set_historical_price(self, item_id: str, price: str, timestamp: int):
         key = self._get_historical_price_key(item_id, timestamp)
         await self._client.set(key, price)
 

@@ -1,7 +1,7 @@
 from modules.common.portfolio import PortfolioMaker, TransactionProcessor
 from modules.common.schemas import BaseTransactionSchema, BaseAsset, CurrencyEnum
 from modules.stocks.schemas import (
-    StockPortfolioAsset,
+    StockPortfolioAssetSchema,
     StockPortfolioSchema,
     FutureSchema,
     CurrencySchema,
@@ -35,32 +35,32 @@ class StockTransactionProcessor(TransactionProcessor):
                 portfolio_asset = self._portfolio_asset_scheme(
                     share=asset,
                     current_price=current_price,
-                    currency_=getattr(CurrencyEnum, asset.currency),
+                    currency_type=getattr(CurrencyEnum, asset.currency),
                 )
 
             elif isinstance(asset, BondSchema):
                 portfolio_asset = self._portfolio_asset_scheme(
                     bond=asset,
                     current_price=current_price,
-                    currency_=getattr(CurrencyEnum, asset.currency),
+                    currency_type=getattr(CurrencyEnum, asset.currency),
                 )
             elif isinstance(asset, EtfSchema):
                 portfolio_asset = self._portfolio_asset_scheme(
                     etf=asset,
                     current_price=current_price,
-                    currency_=getattr(CurrencyEnum, asset.currency),
+                    currency_type=getattr(CurrencyEnum, asset.currency),
                 )
             elif isinstance(asset, CurrencySchema):
                 portfolio_asset = self._portfolio_asset_scheme(
                     currency=asset,
                     current_price=current_price,
-                    currency_=getattr(CurrencyEnum, asset.currency),
+                    currency_type=getattr(CurrencyEnum, asset.currency),
                 )
             elif isinstance(asset, FutureSchema):
                 portfolio_asset = self._portfolio_asset_scheme(
                     future=asset,
                     current_price=current_price,
-                    currency_=getattr(CurrencyEnum, asset.currency),
+                    currency_type=getattr(CurrencyEnum, asset.currency),
                 )
 
             if portfolio_asset is not None:
@@ -72,5 +72,5 @@ class StockPortfolioMaker(PortfolioMaker):
         super().__init__(
             transaction_processor=StockTransactionProcessor,
             portfolio_schema=StockPortfolioSchema,
-            portfolio_asset_scheme=StockPortfolioAsset,
+            portfolio_asset_scheme=StockPortfolioAssetSchema,
         )

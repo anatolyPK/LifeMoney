@@ -1,3 +1,5 @@
+import asyncio
+
 from src.base.base_model import OperationEnum
 from src.modules.cryptos.schemas import (
     TransactionRead,
@@ -71,6 +73,10 @@ class PortfolioCalculator:
         self._total_investment = 0
 
     async def calculate_assets(self):
+        await self._calculate_balances_and_profits()
+        await self._calculate_percent_of_portfolio()
+
+    async def _calculate_balances_and_profits(self):
         for asset in self.portfolio_maker._assets.values():
             asset.balance = asset.quantity * asset.current_price
             asset.profit_in_currency, asset.profit_in_percent = (
@@ -79,17 +85,18 @@ class PortfolioCalculator:
                     balance=asset.balance,
                 )
             )
-
-            current_price_in_rub = await self._get_current_price_in_rub(asset)
-            average_price_buy_in_rub = await self._get_average_price_buy_in_rub(asset)
-
+            current_price_in_rub, average_price_buy_in_rub = await asyncio.gather(
+                self._get_current_price_in_rub(asset),
+                self._get_average_price_buy_in_rub(asset)
+            )
             self._total_value_rub += asset.quantity * current_price_in_rub
             self._total_investment += asset.quantity * average_price_buy_in_rub
 
+    async def _calculate_percent_of_portfolio(self):
         for asset in self.portfolio_maker._assets.values():
             asset.percent_of_portfolio = MathOperation.get_asset_percent_of_portfolio(
                 portfolio_balance=self._total_value_rub,
-                assets_balance=asset.balance,
+                assets_balance=asset.quantity * await self._get_current_price_in_rub(asset),
             )
 
     def calculate_portfolio_info(self) -> MainPortfolioInfo:
@@ -104,13 +111,13 @@ class PortfolioCalculator:
         )
 
     async def _get_current_price_in_rub(self, asset: BasePortfolioAsset) -> float:
-        if asset.currency_ == CurrencyEnum.usd:
+        if asset.currency_type == CurrencyEnum.usd:
             return await self._convert_rub_in_usd(asset.current_price)
         return asset.current_price
 
     async def _get_average_price_buy_in_rub(self, asset: BasePortfolioAsset) -> float:
         # //TODO вычислять значение usd на необходимую дату
-        if asset.currency_ == CurrencyEnum.usd:
+        if asset.currency_type == CurrencyEnum.usd:
             return await self._convert_rub_in_usd(asset.average_price_buy)
         return asset.average_price_buy
 

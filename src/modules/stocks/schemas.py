@@ -120,7 +120,7 @@ class ReadTransactionSchema(BaseTransactionSchema):
     future: Optional[FutureSchema] = None
 
 
-class StockPortfolioAsset(BasePortfolioAsset):
+class StockPortfolioAssetSchema(BasePortfolioAsset):
     share: Optional[ShareSchema] = None
     bond: Optional[BondSchema] = None
     etf: Optional[EtfSchema] = None
@@ -129,4 +129,4 @@ class StockPortfolioAsset(BasePortfolioAsset):
 
 
 class StockPortfolioSchema(BasePortfolioSchema):
-    assets: list[StockPortfolioAsset]
+    assets: list[StockPortfolioAssetSchema]

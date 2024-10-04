@@ -21,7 +21,7 @@ class BaseAsset(BaseModel):
 class BasePortfolioAsset(BaseModel):
     quantity: float = 0
     average_price_buy: float = 0
-    currency_: CurrencyEnum = CurrencyEnum.usd
+    currency_type: CurrencyEnum = CurrencyEnum.usd
 
     balance: float = 0
     current_price: float = 0
