@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -6,8 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 
+from core.async_tasks import get_async_tasks
 from core.config.project import settings
 from core.middlewares import add_process_time_header
+from modules.common.scheduled_tasks import ScheduledTasks
 from routing.routes import get_apps_router
 from utils.redis_manager import redis_client
 
@@ -15,11 +18,14 @@ from utils.redis_manager import redis_client
 def get_application() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        # // TODO chto eto and how connect redis
+        scheduler = ScheduledTasks(60)
+        scheduler.add_tasks(get_async_tasks())
+        asyncio.create_task(scheduler.run_tasks())
         await redis_client.connect()
         redis = await redis_client.get_client()
         FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
         yield
+        scheduler.close()
         await redis_client.close()
 
     application = FastAPI(

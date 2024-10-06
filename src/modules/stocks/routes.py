@@ -19,7 +19,7 @@ router = APIRouter(
 
 @router.get("/", response_model=StockPortfolioSchema, response_model_exclude_none=True)
 async def stock_portfolio(user: User = Depends(get_current_active_user)):
-    await set_actual_stock_price()
+    # await set_actual_stock_price()
     # await get_candles_yearly()
     portfolio = await stock_service.get_user_portfolio(user)
     return portfolio

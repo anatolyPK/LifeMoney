@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from modules.cryptos.crypto.pricer import set_actual_crypto_price
 from src.modules.cryptos.schemas import (
     TransactionRead,
     TransactionAdd,
@@ -20,7 +21,6 @@ router = APIRouter(
 
 @router.get("/", response_model=CryptoPortfolioSchema)
 async def crypto_portfolio(user: User = Depends(get_current_active_user)):
-    # await set_actual_crypto_price()
     portfolio = await crypto_service.get_user_portfolio(user)
     return portfolio
 
