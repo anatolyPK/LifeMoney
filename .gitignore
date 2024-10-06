@@ -160,3 +160,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+src/core/certs/jwt-public.pem
+src/core/certs/jwt-private.pem
