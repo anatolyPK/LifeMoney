@@ -1,9 +1,21 @@
-version: '3'
-
 services:
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/front
+    ports:
+      - "3000:3000"
+    restart: always
+    container_name: "frontend"
+    command: >
+      npm run dev
+    depends_on:
+      - web
+
   web:
     build:
-      context: .
+      context: ./src
     ports:
       - '8000:8000'
     restart: always
