@@ -27,3 +27,9 @@ above 90 days from current time = daily data (00:00 UTC)
 4. Скачать токены и активы для стока по путям:
    -http://localhost:8000/docs#/stocks/update_assets_api_v1_stocks_update_assets_get
    -http://localhost:8000/docs#/cryptos/update_token_list_api_v1_cryptos_token_update_get
+
+
+
+
+
+   12312

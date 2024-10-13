@@ -1,13 +1,11 @@
-import FormInput, {OptionsFormInput, TypeFormInput} from "@/app/ui/FormInput";
+import FormInput from "@/app/ui/FormInput";
 import FormLabel from "@/app/ui/FormLabel";
 import React from "react";
 import Button from "@/app/ui/Button";
+import SuggestSelect from "@/app/ui/SuggestSelect";
+import SuggestData from "@/app/ui/SuggestData";
+import {Field} from "@/app/types";
 
-export interface Field {
-    label: string; // Метка поля
-    type: TypeFormInput; // Тип поля (например, email, password)
-    options: OptionsFormInput; // Опции для поля
-}
 
 interface FormProps {
     fields: {
@@ -23,14 +21,27 @@ interface FormProps {
 const Form: React.FC<FormProps> = (props) => {
     const {fields, onSubmit, textButton, loading, error} = props;
 
+    if (loading) {
+        return (
+            <div>
+                Loading...
+            </div>
+        );
+
+    }
+
     return (
-        <form className = "space-y-6" onSubmit={onSubmit}>
+        <form className = "space-y-6" onSubmit={onSubmit} >
+
             {Object.keys(fields).map((id) => {
                 const {label, type, options} = fields[id];
                 return (
                     <div key = {options.id}>
                         <FormLabel htmlFor={options.id}>{label}</FormLabel>
-                        <FormInput type={type} options={options} />
+                        { (type === `suggestSelect`) ? <SuggestSelect type = {type} options={options} /> :
+                            (type === `suggestDatalist`) ? <SuggestData type = {type} options={options} /> :
+                                <FormInput type={type} options={options} />
+                        }
                     </div>
                 );
             })}

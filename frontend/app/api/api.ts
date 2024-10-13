@@ -110,6 +110,26 @@ export const CMApi = {
         return res.json();
     },
 
+    // внесение изменений в транзакцию
+    async transactionsEdit(token: string, body: object, id: number) {
+        const res = await fetch(`${url}/cryptos/transactions/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`,
+
+            },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+            // Если ответ не успешен, выбрасываем ошибку с сообщением
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Ошибка при изменении транзакции');
+        }
+        return res.json();
+    },
+
     //получение истории транзакций
     async getTransactions(token: string) {
         const res = await fetch(`${url}/cryptos/transactions`, {
