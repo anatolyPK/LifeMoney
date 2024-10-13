@@ -4,9 +4,7 @@ import {FormEvent, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useAuth} from "@/app/context/AuthContext";
 import Button from "@/app/ui/Button";
-import FormInput from "@/app/ui/FormInput";
 import {AuthAPI} from "@/app/api/api";
-import FormLabel from "@/app/ui/FormLabel";
 import Form from "@/app/ui/Form";
 
 export default function SignIn() {

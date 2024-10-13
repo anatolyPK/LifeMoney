@@ -2,21 +2,10 @@
 
 import React, {FormEvent, useEffect, useState} from 'react';
 import {useAuth} from "@/app/context/AuthContext";
-import {formatTimestamp} from "@/app/lib/formatTimestamp";
-import Button from "@/app/ui/Button";
-import SuggestData from "@/app/ui/SuggestData";
-import FormInput from "@/app/ui/FormInput";
 import {CMApi} from "@/app/api/api";
-import FormLabel from "@/app/ui/FormLabel";
-
-// Определяем интерфейс для токена
-export interface Token {
-    id: number;
-    name: string;
-    symbol: string;
-    cg_id: string;
-}
-
+import Form from "@/app/ui/Form";
+import {formatTimestamp} from "@/app/lib/formatTimestamp";
+import {Token} from "@/app/types";
 
 export default function SignIn() {
     const {accessToken} = useAuth();
@@ -53,8 +42,11 @@ export default function SignIn() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                setLoading(true);
                 const result: Token[] = await CMApi.search(accessToken!, tokenSymbol);
                 setTokensSearch(result);
+
+                setLoading(false);
             } catch (err) {
                 if (err instanceof Error) {
                     setError(err.message);
@@ -62,10 +54,20 @@ export default function SignIn() {
                     setError('Неизвестная  при поиске токенов');
                 }
             }
+
         }
         fetchData();
-    }, [accessToken,tokenSymbol]);
+    }, [accessToken]);
 
+
+    useEffect(() => {
+        const selectedToken = tokensSearch.find(token => token.name === tokenSymbol);
+        if (selectedToken) {
+            setTokenId(selectedToken.id);
+        } else {
+            setTokenId(0);
+        }
+    }, [tokenSymbol]);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -88,7 +90,7 @@ export default function SignIn() {
             setTimestamp(`${Math.floor(new Date().getTime() / 1000)}`);
             setTokenId(0);
             setTokenSymbol(``);
-            setTokensSearch([]);
+            // setTokensSearch([]);
             setBalanceTokens(`0`);
             // Дополнительные действия, уведомление пользователя
             setHighlight(true);
@@ -118,80 +120,84 @@ export default function SignIn() {
             </div>
 
             <div className = "mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                <form onSubmit = {handleSubmit} className = "space-y-6">
 
-                    <div>
-                        <FormLabel htmlFor={`operation`}>Вид операции</FormLabel>
-                        <div className = "mt-2">
-                            <select
-                                id = "operations"
-                                name = "operation"
-                                value = {operation}
-                                onChange = {(e) => setOperation(e.target.value)}
-                                className = "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 indent-2.5"
-                            >
-                                <option value = "BUY">Покупка</option>
-                                <option value = "SELL">Продажа</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <FormLabel htmlFor={`quantity`}>Количество</FormLabel>
-                        <div className = "mt-2">
-                            <FormInput type = {`number`}
-                                       id = {`quantity`}
-                                       value = {quantity}
-                                       onChange = {setQuantity}
-                                       min = {`0`}
-                                       required = {true}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <FormLabel htmlFor={`price_in_usd`}>Цена ( $ ):</FormLabel>
-                        <div className = "mt-2">
-                            <FormInput type = {`number`}
-                                       id = {`price_in_usd`}
-                                       value = {priceInUsd}
-                                       onChange = {setPriceInUsd}
-                                       min = {`0`}
-                                       required = {true}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <FormLabel htmlFor={`timestamp`}>Время операции:</FormLabel>
-                        <div className = "mt-2">
-                            <FormInput type = {`date`}
-                                       id = {`timestamp`}
-                                       value = {formatTimestamp(timestamp)}
-                                       onChange = {setTimestamp}
-                                       required = {true}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <FormLabel htmlFor={`tokenId`}>Название токена:</FormLabel>
-                        <div className = "mt-2">
-                            <SuggestData tokenSymbol = {tokenSymbol}
-                                         setTokenSymbol = {setTokenSymbol}
-                                         tokensSearch = {tokensSearch}
-                                         setTokenId = {setTokenId} />
-                            {tokenId ? (<div>Баланас: {balanceTokens}</div>) : null}
-                        </div>
-                    </div>
-
-                    <div>
-                        <Button type = {"submit"}
-                                disabled = {loading}>{loading ? 'Отправка данных...' : 'Отправить данные'}</Button>
-                        {highlight ? `Успешно` : ``}
-                    </div>
-                    {error && <p style = {{color: 'red'}}>{error}</p>}
-                </form>
+                <Form
+                    fields = {
+                        {
+                            operation: {
+                                label: `Вид операции`,
+                                type: `suggestSelect`,
+                                options: {
+                                    id: `operation`,
+                                    value: operation,
+                                    onChange: setOperation,
+                                    required: true,
+                                    optionsSuggest: [
+                                        {
+                                            value: `BUY`,
+                                            children: `Покупка`
+                                        },
+                                        {
+                                            value: `SELL`,
+                                            children: `Продажа`
+                                        },
+                                    ]
+                                }
+                            },
+                            number: {
+                                label: `Количество`,
+                                type: `number`,
+                                options: {
+                                    id: `quantity`,
+                                    value: quantity,
+                                    onChange: setQuantity,
+                                    placeholder: `0`,
+                                    min: `0`,
+                                    required: true,
+                                }
+                            },
+                            priceInUsd: {
+                                label: `Цена ( $ ):`,
+                                type: `number`,
+                                options: {
+                                    id: `priceInUsd`,
+                                    value: priceInUsd,
+                                    onChange: setPriceInUsd,
+                                    placeholder: `0`,
+                                    min: `0`,
+                                    required: true,
+                                }
+                            },
+                            timestamp: {
+                                label: `Время операции:`,
+                                type: `date`,
+                                options: {
+                                    id: `timestamp`,
+                                    value: formatTimestamp(timestamp),
+                                    onChange: setTimestamp,
+                                    required: true,
+                                }
+                            },
+                            tokenSymbol: {
+                                label: `Название токена:`,
+                                type: `suggestDatalist`,
+                                options: {
+                                    id: `tokenSymbol`,
+                                    value: tokenSymbol,
+                                    onChange: setTokenSymbol,
+                                    required: true,
+                                    optionsDatalist: tokensSearch,
+                                }
+                            },
+                        }
+                    }
+                    onSubmit = {handleSubmit}
+                    textButton = {loading ? 'Отправка данных...' : 'Отправить данные'}
+                    loading = {loading}
+                    error = {error}
+                />
+                {tokenId ? (<div>Баланас: {balanceTokens}</div>) : null}
+                {highlight ? <span>Успешно</span> : null}
             </div>
         </div>
     )

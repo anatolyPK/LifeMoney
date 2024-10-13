@@ -5,44 +5,13 @@ import Chart from "@/app/cryptosMarket/about/Chart";
 import {CMApi} from "@/app/api/api";
 import SuggestSelect from "@/app/ui/SuggestSelect";
 import {useAuth} from "@/app/context/AuthContext";
+import {CryptosPortfolio, DataPoint} from "@/app/types";
 
-
-interface CryptosPortfolio {
-    main_info: {
-        total_value: number,
-        total_investment: number,
-        total_profit_in_currency: number,
-        total_profit_in_percent: number
-    },
-    assets:
-        {
-            asset: {
-                id: number,
-                name: string,
-                symbol: string,
-                cg_id: string
-            },
-            quantity: number,
-            average_price_buy: number,
-            balance: number,
-            current_price: number,
-            profit_in_currency: number,
-            profit_in_percent: number,
-            percent_of_portfolio: number
-        }[]
-}
-
-interface DataPoint {
-    date: string; // Дата в формате строки
-    value: number; // Значение
-}
-
-export type TimePeriod = `daily` | `weekly` | `monthly` | `yearly`;
 
 export default function Page() {
     const [data, setData] = useState<CryptosPortfolio | null>(null);
     const [dataChart, setDataChart] = useState<DataPoint[]>([]);
-    const [timePeriod, setTimePeriod] = useState<TimePeriod>(`daily`);
+    const [timePeriod, setTimePeriod] = useState<string>(`daily`);
     const [errorData, setErrorData] = useState<string | null>(null);
     const [errorDataChart, setErrorDataChart] = useState<string | null>(null);
     const {accessToken} = useAuth();
@@ -150,10 +119,33 @@ export default function Page() {
                   <div>
                     <h1>График значений</h1>
                     <Chart dataChart = {dataChart} />
-                       <label htmlFor = "timePeriodSelect" className = "block text-sm font-medium leading-6 text-gray-900">
+                       <label htmlFor = "timePeriodSelect"
+                              className = "block text-sm font-medium leading-6 text-gray-900">
                             Период отображения графика
                         </label>
-                      <SuggestSelect value = {timePeriod} onChange = {setTimePeriod} />
+                      <SuggestSelect type = {`suggestSelect`} options = {{
+                          id: `timePeriodSelect`,
+                          value: timePeriod,
+                          onChange: setTimePeriod,
+                          optionsSuggest: [
+                              {
+                                  value: `daily`,
+                                  children: `День`,
+                              },
+                              {
+                                  value: `weekly`,
+                                  children: `Неделя`,
+                              },
+                              {
+                                  value: `monthly`,
+                                  children: `Месяц`,
+                              },
+                              {
+                                  value: `yearly`,
+                                  children: `Год`,
+                              },
+                          ]
+                      }} />
                   </div>
               </div>
         </div>
