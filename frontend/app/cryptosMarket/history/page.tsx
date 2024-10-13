@@ -1,34 +1,20 @@
 'use client'
 
-import React, {useEffect, useState} from "react";
+import React, {ReactElement, useEffect, useState} from "react";
 import {useAuth} from "@/app/context/AuthContext";
 import Excel from "@/app/cryptosMarket/history/Excel";
 import {CMApi} from "@/app/api/api";
-
-
-interface Token {
-    id: number;
-    name: string;
-    symbol: string;
-    cg_id: string;
-}
-
-interface Transaction {
-    operation: 'BUY' | 'SELL';
-    quantity: number;
-    price: number;
-    timestamp: string;
-    token: Token;
-    id: number;
-}
+import Dialog from "@/app/components/Dialog";
+import {Transaction} from "@/app/types";
 
 
 export default function Page() {
     const [data, setData] = useState<Transaction[] | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [dialog, setDialog] = useState<ReactElement | null>(null);
+
     const {accessToken} = useAuth();
     const headers = [`№`, `Вид`, `Количество`, `Цена ($)`, `Дата`, `Название (тикер)`, `Действие`];
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -44,8 +30,16 @@ export default function Page() {
             }
         }
         fetchData();
-    }, [accessToken]);
+    }, [accessToken, dialog]);
 
+
+    const closeModal = () => setDialog(null);
+
+    function handleActionButton(id: number) {
+        setDialog(<Dialog header = {`Внести изменения в транзакцию`}
+                          id = {id}
+                          onClose = {closeModal} />)
+    }
 
     if (data === null) {
         return <div>Loading...</div>
@@ -53,7 +47,8 @@ export default function Page() {
     return (
         <div>
             <div>{error && <p>Error: {error}</p>}</div>
-            <Excel data = {data} />
+            <Excel headers = {headers} data = {data} handleActionButton = {handleActionButton} />
+            {dialog}
         </div>
     );
 }

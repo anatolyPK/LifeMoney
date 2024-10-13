@@ -1,17 +1,8 @@
 import React from "react";
+import {OptionsFormInput, TypeFormInput} from "@/app/types";
 
-export type TypeFormInput = 'text' | 'password' | `email` | `number` | `date`;
-export interface OptionsFormInput {
-    id: string;
-    value: string;
-    onChange: (value: string) => void;
-    placeholder?: string;
-    autoComplete?: string;
-    required?: boolean;
-    min?: string;
-}
 
-interface FormInputProps {
+export interface FormInputProps {
     type: TypeFormInput,
     options: OptionsFormInput,
 }

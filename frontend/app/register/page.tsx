@@ -1,11 +1,8 @@
 'use client';
 
 import {FormEvent, useState} from 'react';
-import { useRouter } from 'next/navigation';
-import Button from "@/app/ui/Button";
-import FormInput from "@/app/ui/FormInput";
+import {useRouter} from 'next/navigation';
 import {AuthAPI} from "@/app/api/api";
-import FormLabel from "@/app/ui/FormLabel";
 import Form from "@/app/ui/Form";
 
 const Register = () => {
@@ -47,17 +44,29 @@ const Register = () => {
                 <Form
                     fields = {
                         {
+                            username: {
+                                label: `Имя пользователя`,
+                                type: `text`,
+                                options: {
+                                    id: `username`,
+                                    value: username,
+                                    onChange: setUsername,
+                                    placeholder: `Имя пользователя`,
+                                    autoComplete: "username",
+                                    required: true,
+                                }
+                            },
                             email: {
-                                label: `Электронная почта`,
+                                label: `email`,
                                 type: `email`,
                                 options: {
                                     id: `email`,
-                                    value: username,
-                                    onChange: setUsername,
+                                    value: email,
+                                    onChange: setEmail,
                                     placeholder: `user@example.com`,
                                     autoComplete: "email",
                                     required: true,
-                                }
+                                },
                             },
                             password: {
                                 label: `Пароль`,
@@ -75,59 +84,10 @@ const Register = () => {
                         }
                     }
                     onSubmit = {handleSubmit}
-                    textButton = {loading ? 'Вход...' : 'Войти'}
+                    textButton = {loading ? 'Регистрация...' : 'Зарегистрироваться'}
                     loading={loading}
                     error={error}
                 />
-                
-                <form onSubmit = {handleSubmit} className = "space-y-6">
-                    <div>
-                        <FormLabel htmlFor={`username`}>Имя пользователя</FormLabel>
-                        <div className = "mt-2">
-                             <FormInput type={`text`}
-                                        id={`username`}
-                                        value={username}
-                                        onChange={setUsername}
-                                        placeholder={`Имя пользователя`}
-                                        autoComplete={"username"}
-                                        required = {true}
-                             />
-                        </div>
-                    </div>
-
-                    <div>
-                        <FormLabel htmlFor={`email`}>Электронная почта</FormLabel>
-                        <div className = "mt-2">
-                             <FormInput type={`email`}
-                                        id={`email`}
-                                        value={email}
-                                        onChange={setEmail}
-                                        placeholder={`user@example.com`}
-                                        autoComplete={"email"}
-                                        required = {true}
-                             />
-                        </div>
-                    </div>
-
-                    <div>
-                        <FormLabel htmlFor={`password`}>Пароль</FormLabel>
-                        <div className = "mt-2">
-                            <FormInput type={`password`}
-                                       id={`password`}
-                                       value={password}
-                                       onChange={setPassword}
-                                       placeholder={`*****`}
-                                       autoComplete={"password"}
-                                       required = {true}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <Button type={`submit`} disabled = {loading}>{loading ? 'Регистрация...' : 'Зарегистрироваться'}</Button>
-                    </div>
-                    {error && <p style = {{color: 'red'}}>{error}</p>}
-                </form>
             </div>
 
      </div>
