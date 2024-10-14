@@ -18,7 +18,8 @@ from backend.src.utils.redis_manager import redis_client
 def get_application() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        scheduler = ScheduledTasks(60)
+        # in sec
+        scheduler = ScheduledTasks(300)
         scheduler.add_tasks(get_async_tasks())
         asyncio.create_task(scheduler.run_tasks())
         await redis_client.connect()

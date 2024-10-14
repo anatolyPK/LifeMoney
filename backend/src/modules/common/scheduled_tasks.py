@@ -18,8 +18,6 @@ class ScheduledTasks:
     async def run_tasks(self):
         self._running = True
         while self._running:
-            await asyncio.sleep(self.interval)
-            print('TASKAAAAAA')
             try:
                 await asyncio.gather(
                     *(task() for task in self._tasks),
@@ -30,6 +28,7 @@ class ScheduledTasks:
             for task in self._tasks:
                 if isinstance(task, asyncio.Future) and task.done() and task.exception() is not None:
                     print(f"Task raised an exception: {task.exception()}")
+            await asyncio.sleep(self.interval)
 
     def close(self):
         self._running = False

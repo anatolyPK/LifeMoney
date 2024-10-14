@@ -11,13 +11,3 @@ async def set_actual_crypto_price():
         price = str(crypto["quote"]["USD"]["price"])
         await redis_manager.set_current_price(key, price)
 
-
-@timing_decorator
-async def set_actual_crypto_price_no_redis():
-    prices_from_api = await CoinMarketCupAPI.get_cryptocurrency_listings(
-        100
-    )  # // TODO одинаковые символы у токенов (много btc и других)а
-    for crypto in prices_from_api["data"]:
-        key = crypto["symbol"].lower()
-        price = str(crypto["quote"]["USD"]["price"])
-        # await redis_manager.set_current_price(key, price)
