@@ -1,3 +1,5 @@
+from fastapi import HTTPException, status
+
 from backend.src.base.base_model import Token, OperationEnum, User
 from backend.src.core.decorators import timeit
 
@@ -28,11 +30,20 @@ class CryptoService(BaseService):
     async def update_transaction(
         self, transaction: TransactionAdd, user: User, id_: int
     ):
+        await self._check_transaction_belongs_to_user(user, id_)
         transaction_with_user_id = transaction.model_copy(update={"user_id": user.id})
-        added_transaction = await self.crypto_repo.update(
+        await self.crypto_repo.update(
             transaction_with_user_id, id=id_
         )
-        return added_transaction
+        return await self.crypto_repo.get_single(id=id_)
+
+    async def _check_transaction_belongs_to_user(self, user: User, id_: int):
+        user_transaction = await self.crypto_repo.get_single(id=id_)
+        if user_transaction.user_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to update this transaction."
+            )
 
     async def get_user_transactions(self, user: User) -> list[TransactionRead]:
         transactions = await self.crypto_repo.get_transactions(user_id=user.id)
@@ -60,6 +71,10 @@ class CryptoService(BaseService):
         )
 
         return token_balance
+
+    async def delete_transaction(self, user: User, id_: int):
+        await self._check_transaction_belongs_to_user(user, id_)
+        await self.crypto_repo.delete(id=id_)
 
 
 class TokenService(BaseService):

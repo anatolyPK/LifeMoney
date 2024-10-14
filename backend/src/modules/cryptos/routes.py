@@ -51,6 +51,17 @@ async def update_crypto_transactions(
     new_transaction = await crypto_service.update_transaction(transaction, user, id)
     return new_transaction
 
+@router.delete("/transactions/{id}", status_code=200)
+async def delete_crypto_transactions(
+    id: int,
+    user: User = Depends(get_current_active_user),
+):
+    """
+    Передавать без user_id
+    """
+    await crypto_service.delete_transaction(user, id)
+    return {"detail": "Transaction successfully deleted"}
+
 
 @router.get("/token/update", status_code=200)
 async def update_token_list(user: User = Depends(get_current_superuser)):
