@@ -42,7 +42,13 @@ class TinkoffAPI:
     async def get_current_prices(cls, figis: list[str]) -> dict[list[Optional[dict]]]:
         url = f"{cls._base_url}MarketDataService/GetLastPrices"
         response_text = await AsyncSession.post(
-            url=url, headers=cls._headers, params=cls._parameters, data={"figi": figis}
+            url=url,
+            headers=cls._headers,
+            params=cls._parameters,
+            data={
+                "instrument_id": figis,
+                'last_price_type': 'LAST_PRICE_EXCHANGE'
+            }
         )
         data = json.loads(response_text)
         return data
