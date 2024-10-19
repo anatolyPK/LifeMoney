@@ -4,15 +4,17 @@ import {formatTimestamp} from "@/app/utils/formatTimestamp";
 import {useAuth} from "@/app/context/AuthContext";
 import {CMApi} from "@/app/api/api";
 import {Token, Transaction} from "@/app/types";
+import Button from "@/app/ui/Button";
 
 interface DialogProps {
+    type: `edit` | `delete`;
     header: string;
     transaction: Transaction;
     onClose: () => void;
 }
 
 function Dialog(props: DialogProps) {
-    const {header, transaction, onClose} = props;
+    const {type, header, transaction, onClose} = props;
     const {accessToken} = useAuth();
     const [operation, setOperation] = useState<string>(transaction.operation);
     const [quantity, setQuantity] = useState<number>(transaction.quantity);
@@ -42,7 +44,7 @@ function Dialog(props: DialogProps) {
 
         }
         fetchData();
-    },[accessToken, tokenSymbol]);
+    }, [accessToken, tokenSymbol]);
 
     useEffect(() => {
         const selectedToken = tokensSearch.find(token => token.name === tokenSymbol);
@@ -56,6 +58,23 @@ function Dialog(props: DialogProps) {
     const closeDialog = () => {
         onClose();
     };
+
+    const handleDelete = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            await CMApi.transactionDelete(accessToken!, transaction.id);
+            onClose();
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('Неизвестная ошибка при удалении транзакции');
+            }
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -83,8 +102,9 @@ function Dialog(props: DialogProps) {
         }
     };
 
-    return (
-        <div className = "block fixed inset-0 z-50 bg-black bg-opacity-50 overflow-auto">
+    if (type === `edit`) {
+        return (
+            <div className = "block fixed inset-0 z-50 bg-black bg-opacity-50 overflow-auto">
             <div className = "flex items-center justify-center h-full">
                 <div className = "bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/3">
                     <span
@@ -170,7 +190,28 @@ function Dialog(props: DialogProps) {
                 </div>
             </div>
         </div>
-    );
-}
+        );
+    }
+        if (type === `delete`) {
+            return (
+                <div className = "block fixed inset-0 z-50 bg-black bg-opacity-50 overflow-auto">
+                    <div className = "flex items-center justify-center h-full">
+                        <div className = "bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/3">
+                            <span
+                                className = "cursor-pointer text-blue-400 hover:text-amber-300 transition-colors float-right text-2xl"
+                                onClick = {closeDialog}
+                            >&times;</span>
+                            <h2 className = "text-lg font-semibold">{header}</h2>
+                            <div className={`flex items-center justify-center h-full gap-2`}>
+                                <Button type={`submit`} onClick={handleDelete}>Удалить</Button>
+                                <Button type={`submit`} onClick={closeDialog}>Отмена</Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
-export default Dialog;
+    }
+
+    export default Dialog;

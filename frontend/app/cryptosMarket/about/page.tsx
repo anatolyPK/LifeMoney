@@ -7,6 +7,7 @@ import SuggestSelect from "@/app/ui/SuggestSelect";
 import {useAuth} from "@/app/context/AuthContext";
 import {CryptosPortfolio, DataPoint} from "@/app/types";
 import {formatNumberWithSpaces} from "@/app/utils/formatNumberWithSpaces";
+import Button from "@/app/ui/Button";
 
 
 const fetchCryptos = async (accessToken: string, setErrorData: any) => {
@@ -33,8 +34,6 @@ const fetchCryptoChart = async (accessToken: string, timePeriod: string, setErro
         }
     }
 }
-
-
 
 
 export default function Page() {
@@ -71,6 +70,8 @@ export default function Page() {
     if (data === null) {
         return <div>Loading...</div>
     }
+
+
     return (
         <div>
               <div className = {`flex-auto px-12 h-[600px] text-center `}>
@@ -128,35 +129,37 @@ export default function Page() {
                       }} />
                   </div>
               </div>
-            <div>
-                <table className = {`m-2 p-2`}>
-                <thead>
-                    <tr>{headers.map((title, idx) => {
-                        return (
-                            <th key = {idx}
-                                className = {`m-2 p-2 font-bold border-2  border-solid border-blue-400`}>{title}</th>
-                        )
-                    })}</tr>
-                </thead>
-                <tbody>
-                    {data.assets.map((asset, idx) => {
-                        return (
-                            <tr key = {idx}>
-
-                                <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{asset.asset.name} ({asset.asset.symbol})</td>
-                                <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.quantity,0)}</td>
-                                <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.average_price_buy,2)}</td>
-                                <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.current_price,2)}</td>
-                                <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.profit_in_currency, 2)} ({formatNumberWithSpaces(asset.profit_in_percent,2)} %)</td>
-                                <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.balance, 2)}</td>
-                                <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.percent_of_portfolio, 2)}</td>
+            {data.assets.length === 0 ?
+                (<div>В портфеле отсутсвуют активы. <Button type = {`register`}
+                                                            href = {`/cryptosMarket/transactions`}>Провести операцию?
+                </Button></div>) : (
+                    <div>
+                        <table className = {`m-2 p-2`}>
+                            <thead>
+                            <tr>{headers.map((title, idx) => {
+                                return (
+                                    <th key = {idx}
+                                        className = {`m-2 p-2 font-bold border-2  border-solid border-blue-400`}>{title}</th>
+                                )})}
                             </tr>
-                        )
-                    })}
-                </tbody>
-            </table>
-            </div>
+                            </thead>
+                            <tbody>
+                            {data.assets.map((asset, idx) => {
+                                return (
+                                    <tr key = {idx}>
+                                        <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{asset.asset.name} ({asset.asset.symbol})</td>
+                                        <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.quantity, 0)}</td>
+                                        <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.average_price_buy, 2)}</td>
+                                        <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.current_price, 2)}</td>
+                                        <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.profit_in_currency, 2)} ({formatNumberWithSpaces(asset.profit_in_percent, 2)} %)</td>
+                                        <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.balance, 2)}</td>
+                                        <td className = {`m-2 p-2 border-2  border-solid border-blue-400 text-center`}>{formatNumberWithSpaces(asset.percent_of_portfolio, 2)}</td>
+                                    </tr>
+                                )})}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
         </div>
-
     );
 }
