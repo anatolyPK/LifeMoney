@@ -15,7 +15,7 @@ services:
 
   web:
     build:
-      context: ./src
+      context: ./backend
     ports:
       - '8000:8000'
     restart: always
@@ -29,7 +29,7 @@ services:
       - POSTGRES_PASSWORD
       - PYTHONPATH=/code/src
     command: >
-      sh -c "uvicorn src.main:app --host 0.0.0.0 --port 8000"
+      sh -c "uvicorn backend.main:app --host 0.0.0.0 --port 8000"
     depends_on:
       - database
 
