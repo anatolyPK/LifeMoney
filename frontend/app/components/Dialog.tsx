@@ -1,25 +1,25 @@
 import React, {FormEvent, useEffect, useState} from "react";
 import Form from "@/app/ui/Form";
-import {formatTimestamp} from "@/app/lib/formatTimestamp";
+import {formatTimestamp} from "@/app/utils/formatTimestamp";
 import {useAuth} from "@/app/context/AuthContext";
 import {CMApi} from "@/app/api/api";
-import {Token} from "@/app/types";
+import {Token, Transaction} from "@/app/types";
 
 interface DialogProps {
     header: string;
-    id: number;
+    transaction: Transaction;
     onClose: () => void;
 }
 
 function Dialog(props: DialogProps) {
-    const {header, id, onClose} = props;
+    const {header, transaction, onClose} = props;
     const {accessToken} = useAuth();
-    const [operation, setOperation] = useState<string>('BUY');
-    const [quantity, setQuantity] = useState<string>(`0`);
-    const [priceInUsd, setPriceInUsd] = useState<string>(`0`);
-    const [timestamp, setTimestamp] = useState<string>(`${Math.floor(new Date().getTime() / 1000)}`);
-    const [tokenId, setTokenId] = useState<number>(0);
-    const [tokenSymbol, setTokenSymbol] = useState<string>(``);
+    const [operation, setOperation] = useState<string>(transaction.operation);
+    const [quantity, setQuantity] = useState<number>(transaction.quantity);
+    const [price, setPriceInUsd] = useState<number>(transaction.price);
+    const [timestamp, setTimestamp] = useState<string>(transaction.timestamp);
+    const [tokenId, setTokenId] = useState<number>(transaction.id);
+    const [tokenSymbol, setTokenSymbol] = useState<string>(transaction.token.name);
     const [tokensSearch, setTokensSearch] = useState<Token[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -42,7 +42,7 @@ function Dialog(props: DialogProps) {
 
         }
         fetchData();
-    }, [accessToken]);
+    },[accessToken, tokenSymbol]);
 
     useEffect(() => {
         const selectedToken = tokensSearch.find(token => token.name === tokenSymbol);
@@ -51,7 +51,7 @@ function Dialog(props: DialogProps) {
         } else {
             setTokenId(0);
         }
-    }, [tokenSymbol]);
+    }, [tokensSearch, tokenSymbol]);
 
     const closeDialog = () => {
         onClose();
@@ -64,12 +64,12 @@ function Dialog(props: DialogProps) {
         const body = {
             "operation": operation,
             "quantity": quantity,
-            "price": priceInUsd,
+            "price": price,
             "timestamp": timestamp,
             "token_id": tokenId
         }
         try {
-            await CMApi.transactionsEdit(accessToken!, body, id);
+            await CMApi.transactionsEdit(accessToken!, body, transaction.id);
             onClose();
 
         } catch (err) {
@@ -132,7 +132,7 @@ function Dialog(props: DialogProps) {
                                     type: `number`,
                                     options: {
                                         id: `priceInUsd`,
-                                        value: priceInUsd,
+                                        value: price,
                                         onChange: setPriceInUsd,
                                         placeholder: `0`,
                                         min: `0`,

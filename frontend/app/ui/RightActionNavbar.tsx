@@ -12,17 +12,9 @@ export default function RightActionNavbar() {
         <li
             className = {`w-52 py-2 bg-blue-400 rounded-lg hover:text-amber-300 transition-colors shadow-md`}
         >
-          <button>Внести средства (XXX)</button>
+          <button>Может какой-нибудь виджет для заметок и тп</button>
         </li>
-        <Button className = {`${pathname === '/cryptosMarket/transactions' ? 'text-amber-300' : ''}`}
-                type={`actionNavbar`}
-                href = {`/cryptosMarket/transactions`}>Провести операцию
-        </Button>
-        <li
-            className = {`w-52 py-2 bg-blue-400 rounded-lg hover:text-amber-300 transition-colors shadow-md`}
-        >
-          <button>Транзакция (XXX)</button>
-        </li>
+
       </ul>
     </div>
     );

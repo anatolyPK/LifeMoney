@@ -2,8 +2,8 @@ export type TypeFormInput = 'text' | 'password' | `email` | `number` | `date` | 
 
 export interface OptionsFormInput {
     id: string;
-    value: string;
-    onChange: (value: string) => void;
+    value: string | number;
+    onChange: (value: any) => void;
     placeholder?: string;
     autoComplete?: string;
     required?: boolean;

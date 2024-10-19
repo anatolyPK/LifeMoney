@@ -8,6 +8,19 @@ import Dialog from "@/app/components/Dialog";
 import {Transaction} from "@/app/types";
 
 
+const fetchTransactions = async (accessToken:string, setError: any) => {
+    try {
+        return await CMApi.getTransactions(accessToken);
+    } catch (err) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError('Неизвестная ошибка при получении истории транзакций');
+        }
+    }
+}
+
+
 export default function Page() {
     const [data, setData] = useState<Transaction[] | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -17,27 +30,15 @@ export default function Page() {
     const headers = [`№`, `Вид`, `Количество`, `Цена ($)`, `Дата`, `Название (тикер)`, `Действие`];
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const result: Transaction[] = await CMApi.getTransactions(accessToken!);
-                setData(result.reverse());
-            } catch (err) {
-                if (err instanceof Error) {
-                    setError(err.message);
-                } else {
-                    setError('Неизвестная ошибка при получении истории транзакций');
-                }
-            }
-        }
-        fetchData();
+        fetchTransactions(accessToken!, setError).then(transactions => setData(transactions.reverse()));
     }, [accessToken, dialog]);
 
 
     const closeModal = () => setDialog(null);
 
-    function handleActionButton(id: number) {
+    function handleActionButton(transaction: Transaction) {
         setDialog(<Dialog header = {`Внести изменения в транзакцию`}
-                          id = {id}
+                          transaction= {transaction}
                           onClose = {closeModal} />)
     }
 
