@@ -93,7 +93,7 @@ class PortfolioCalculator:
         for asset in self.portfolio_maker._assets.values():
             asset.percent_of_portfolio = MathOperation.get_asset_percent_of_portfolio(
                 portfolio_balance=self._total_value_rub,
-                assets_balance=asset.quantity * asset.current_price,
+                assets_balance=asset.quantity * asset.current_price
             )
 
     def calculate_portfolio_info(self) -> MainPortfolioInfo:
