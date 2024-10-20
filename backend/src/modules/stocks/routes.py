@@ -82,9 +82,12 @@ async def get_user_asset_balance(
     response_model_exclude_none=True,
 )
 async def search_assets(
-    asset_symbol: str, user: User = Depends(get_current_active_user)
+        asset_symbol: str,
+        limit: int = 100,
+        offset: int = 0,
+        user: User = Depends(get_current_active_user)
 ):
-    return await stock_service.search_asset(asset_symbol)
+    return await stock_service.search_asset(asset_symbol, limit, offset)
 
 
 # @router.get("/graph", status_code=200)  # , response_model=list[TokenSchema])

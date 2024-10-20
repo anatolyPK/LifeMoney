@@ -24,7 +24,7 @@ above 90 days from current time = daily data (00:00 UTC)
    docker compose exec web alembic -c src/core/db/alembic.ini upgrade head
     ``` 
    При выполнении миграций создается суперпользователь user@example.com с паролем 'string'
-4. Скачать токены и активы для стока по путям:
+4. Скачать токены и активы под суперпользователем по путям:
    -http://localhost:8000/docs#/stocks/update_assets_api_v1_stocks_update_assets_get
    -http://localhost:8000/docs#/cryptos/update_token_list_api_v1_cryptos_token_update_get
 

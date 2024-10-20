@@ -33,9 +33,9 @@ class StockService(BaseService):
     def __init__(self, stock_repo: AbstractRepository):
         self.repository: AbstractRepository = stock_repo
 
-    async def search_asset(self, asset_name: str) -> AssetsSearchResultsSchema:
+    async def search_asset(self, asset_name: str, limit: int, offset: int) -> AssetsSearchResultsSchema:
         tasks = [
-            asset_service.repository.search_asset(asset_name)
+            asset_service.repository.search_asset(asset_name, limit, offset)
             for asset_service in (
                 share_service,
                 bond_service,

@@ -183,8 +183,8 @@ class BaseAssetRepository(
             model=model, session=db_session, dto_schema=dto_schema
         )
 
-    async def search_asset(self, asset_name: str) -> list[Optional[ShareSchema]]:
-        return await self._asset_searcher.search_asset(asset_name)
+    async def search_asset(self, asset_name: str, limit: int, offset: int) -> list[Optional[ShareSchema]]:
+        return await self._asset_searcher.search_asset(asset_name, limit, offset)
 
     async def create_multi(self, data: list[dict[str, Any]]):
         existing_figis = await self.check_existing_records(

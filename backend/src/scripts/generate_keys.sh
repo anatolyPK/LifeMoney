@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mkdir -p src/core/certs
+mkdir -p backend/src/core/certs
 
 openssl genrsa -out app/src/core/certs/jwt-private.pem 2048
 echo "Приватный ключ создан: app/src/core/certs/jwt-private.pem"
