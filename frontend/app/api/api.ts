@@ -58,7 +58,7 @@ export const UserAPI = {
 export const CMApi = {
     // поиск токенов в выпадающем списке
     async search(token: string, tokenSymbol: string) {
-        const res = await fetch(`${url}/cryptos/token/search?token_symbol=${tokenSymbol}`, {
+        const res = await fetch(`${url}/cryptos/token/search?token_symbol=${tokenSymbol}&limit=100&offset=0`, {
             method: 'GET',
             headers: {
                 'accept': 'application/json',
@@ -129,6 +129,26 @@ export const CMApi = {
         }
         return res.json();
     },
+
+    // удаление транзакцию
+    async transactionDelete(token: string, id: number) {
+        const res = await fetch(`${url}/cryptos/transactions/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`,
+
+            },
+        });
+        if (!res.ok) {
+            // Если ответ не успешен, выбрасываем ошибку с сообщением
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Ошибка при удалении транзакции');
+        }
+        return res.json();
+    },
+
 
     //получение истории транзакций
     async getTransactions(token: string) {

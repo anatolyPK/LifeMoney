@@ -4,10 +4,37 @@ import React, {FormEvent, useEffect, useState} from 'react';
 import {useAuth} from "@/app/context/AuthContext";
 import {CMApi} from "@/app/api/api";
 import Form from "@/app/ui/Form";
-import {formatTimestamp} from "@/app/lib/formatTimestamp";
+import {formatTimestamp} from "@/app/utils/formatTimestamp";
 import {Token} from "@/app/types";
 
-export default function SignIn() {
+
+const fetchBalance = async (accessToken: string, tokenId: number, setError: any) => {
+    try {
+        return await CMApi.balance(accessToken, tokenId);
+    } catch (err) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError('Неизвестная ошибка при запросе баланса');
+        }
+    }
+}
+
+const fetchTokensSearch = async (accessToken: string, tokenSymbol: string, setError: any) => {
+    try {
+        return await CMApi.search(accessToken, tokenSymbol);
+    } catch (err) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError('Неизвестная  при поиске токенов');
+        }
+    }
+
+}
+
+
+export default function Transaction() {
     const {accessToken} = useAuth();
     const [operation, setOperation] = useState<string>('BUY');
     const [quantity, setQuantity] = useState<string>(`0`);
@@ -21,43 +48,15 @@ export default function SignIn() {
     const [loading, setLoading] = useState<boolean>(false);
     const [highlight, setHighlight] = useState(false);
 
-
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const result = await CMApi.balance(accessToken!, tokenId);
-                setBalanceTokens(result);
-            } catch (err) {
-                if (err instanceof Error) {
-                    setError(err.message);
-                } else {
-                    setError('Неизвестная ошибка при запросе баланса');
-                }
-            }
+        if (tokenId) {
+            fetchBalance(accessToken!, tokenId, setError).then(balance => setBalanceTokens(balance));
         }
-        fetchData();
-
     }, [accessToken, tokenId]);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const result: Token[] = await CMApi.search(accessToken!, tokenSymbol);
-                setTokensSearch(result);
-
-                setLoading(false);
-            } catch (err) {
-                if (err instanceof Error) {
-                    setError(err.message);
-                } else {
-                    setError('Неизвестная  при поиске токенов');
-                }
-            }
-
-        }
-        fetchData();
-    }, [accessToken]);
+        fetchTokensSearch(accessToken!, tokenSymbol, setError).then(TokensSearch => setTokensSearch(TokensSearch));
+    }, [accessToken, tokenSymbol]);
 
 
     useEffect(() => {
@@ -67,7 +66,7 @@ export default function SignIn() {
         } else {
             setTokenId(0);
         }
-    }, [tokenSymbol]);
+    }, [tokenSymbol, tokensSearch]);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -196,7 +195,7 @@ export default function SignIn() {
                     loading = {loading}
                     error = {error}
                 />
-                {tokenId ? (<div>Баланас: {balanceTokens}</div>) : null}
+                {tokenId ? (<div>Баланс: {balanceTokens}</div>) : null}
                 {highlight ? <span>Успешно</span> : null}
             </div>
         </div>

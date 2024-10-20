@@ -21,14 +21,6 @@ interface FormProps {
 const Form: React.FC<FormProps> = (props) => {
     const {fields, onSubmit, textButton, loading, error} = props;
 
-    if (loading) {
-        return (
-            <div>
-                Loading...
-            </div>
-        );
-
-    }
 
     return (
         <form className = "space-y-6" onSubmit={onSubmit} >
