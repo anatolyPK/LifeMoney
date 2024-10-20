@@ -1,5 +1,5 @@
 from backend.src.modules.common.portfolio import PortfolioMaker, TransactionProcessor
-from backend.src.modules.common.schemas import BaseTransactionSchema
+from backend.src.modules.common.schemas import BaseTransactionSchema, CurrencyEnum
 from backend.src.modules.cryptos.schemas import CryptoPortfolioAsset, CryptoPortfolioSchema
 
 
@@ -14,4 +14,5 @@ class CryptoPortfolioMaker(PortfolioMaker):
             transaction_processor=CryptoTransactionProcessor,
             portfolio_schema=CryptoPortfolioSchema,
             portfolio_asset_scheme=CryptoPortfolioAsset,
+            currency=CurrencyEnum.usd
         )

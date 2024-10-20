@@ -35,6 +35,7 @@ class MainPortfolioInfo(BaseModel):
     total_investment: float
     total_profit_in_currency: float
     total_profit_in_percent: float
+    currency: CurrencyEnum
 
 
 class BaseTransactionSchema(BaseModel):

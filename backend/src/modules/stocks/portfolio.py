@@ -73,4 +73,5 @@ class StockPortfolioMaker(PortfolioMaker):
             transaction_processor=StockTransactionProcessor,
             portfolio_schema=StockPortfolioSchema,
             portfolio_asset_scheme=StockPortfolioAssetSchema,
+            currency=CurrencyEnum.rub
         )
