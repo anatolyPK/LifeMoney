@@ -33,7 +33,7 @@ class TransactionProcessor:
             )
         else:
             self._subtract_asset(
-                asset=transaction.asset,
+                asset=asset,
                 quantity=transaction.quantity,
             )
 
